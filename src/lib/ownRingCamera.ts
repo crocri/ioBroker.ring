@@ -151,9 +151,9 @@ export class OwnRingCamera extends OwnRingDevice {
     this.updateDeviceInfoObject(ringDevice.data as CameraData);
     this.updateHealth();
     this.updateHistory();
-    this.updateSnapshotObject();
-    this.updateHDSnapshotObject();
-    this.updateLiveStreamObject();
+    // this.updateSnapshotObject();
+    // this.updateHDSnapshotObject();
+    // this.updateLiveStreamObject();
     this.autoSched();
     this.subscribeToEvents();
   }
