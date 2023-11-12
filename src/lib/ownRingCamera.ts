@@ -497,7 +497,6 @@ export class OwnRingCamera extends OwnRingDevice {
                 COMMON_LIGHT_SWITCH,
                 targetVal,
                 true,
-                true,
               );
               setTimeout((): () => void => this.updateHealth.bind(this), 65000);
             }
@@ -579,7 +578,6 @@ export class OwnRingCamera extends OwnRingDevice {
         COMMON_LIGHT_SWITCH,
         false,
         true,
-        true,
       );
     }
     this._lastSnapShotDir = await this._adapter.tryGetStringState(`${this.snapshotChannelId}.file`);
@@ -592,29 +590,21 @@ export class OwnRingCamera extends OwnRingDevice {
       `${this.fullId}.${STATE_ID_DEBUG_REQUEST}`,
       COMMON_DEBUG_REQUEST,
       false,
-      true,
-      true,
     );
     this._adapter.upsertState(
       `${this.snapshotChannelId}.auto`,
       COMMON_SNAPSHOT_AUTO,
       this._adapter.config.auto_snapshot,
-      true,
-      true,
     );
     this._adapter.upsertState(
       `${this.HDsnapshotChannelId}.auto`,
       COMMON_HDSNAPSHOT_AUTO,
       this._adapter.config.auto_HDsnapshot,
-      true,
-      true,
     );
     this._adapter.upsertState(
       `${this.liveStreamChannelId}.auto`,
       COMMON_LIVESTREAM_AUTO,
       this._adapter.config.auto_livestream,
-      true,
-      true,
     );
 
     // Remove legacy states
@@ -706,7 +696,6 @@ export class OwnRingCamera extends OwnRingDevice {
       `${this.liveStreamChannelId}.${STATE_ID_LIVESTREAM_DURATION}`,
       COMMON_LIVESTREAM_DURATION,
       this._durationLiveStream,
-      true,
     );
     this.debug(`Livestream duration set to: ${val}`);
   }
@@ -873,7 +862,6 @@ export class OwnRingCamera extends OwnRingDevice {
       COMMON_SNAPSHOT_REQUEST,
       false,
       ack,
-      true,
     );
   }
 
@@ -883,7 +871,6 @@ export class OwnRingCamera extends OwnRingDevice {
       COMMON_HDSNAPSHOT_REQUEST,
       false,
       ack,
-      true,
     );
   }
 
@@ -937,7 +924,6 @@ export class OwnRingCamera extends OwnRingDevice {
       COMMON_LIVESTREAM_REQUEST,
       false,
       ack,
-      true,
     );
     this._durationLiveStream = this._adapter.config.recordtime_livestream;
     this._adapter.upsertState(
@@ -945,7 +931,6 @@ export class OwnRingCamera extends OwnRingDevice {
       COMMON_LIVESTREAM_DURATION,
       this._durationLiveStream,
       ack,
-      true,
     );
   }
 

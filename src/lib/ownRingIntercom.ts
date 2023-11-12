@@ -98,13 +98,11 @@ export class OwnRingIntercom extends OwnRingDevice {
       COMMON_DEBUG_REQUEST,
       false,
       true,
-      true,
     );
     this._adapter.upsertState(
       `${this.fullId}.${STATE_ID_INTERCOM_UNLOCK}`,
       COMMON_INTERCOM_UNLOCK_REQUEST,
       false,
-      true,
       true,
     );
   }
