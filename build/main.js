@@ -264,7 +264,6 @@ class RingAdapter extends adapter_core_1.Adapter {
     async upsertStateAsync(id, common, value, ack = true, subscribe = false) {
         var _a;
         try {
-            this.log.warn(`Updating State ${id} to ${value}, ack = ${ack}`);
             if (this.states[id] !== undefined) {
                 this.states[id] = value;
                 await this.setStateAsync(id, value, ack);
