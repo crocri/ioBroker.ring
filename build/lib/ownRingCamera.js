@@ -496,8 +496,8 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
         this.updateDeviceInfoObject(data);
         this.updateHealth();
         this.updateHistory();
-        this.updateSnapshotObject();
-        this.updateHDSnapshotObject();
+        // this.updateSnapshotObject();
+        // this.updateHDSnapshotObject();
     }
     setDurationLivestream(val) {
         this.silly(`${this.shortId}.durationLivestream()`);
