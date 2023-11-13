@@ -268,6 +268,7 @@ export class RingAdapter extends Adapter {
     subscribe: boolean = false
   ): Promise<void> {
     try {
+      this.log.warn(`Updating State ${id} to ${value}, ack = ${ack}`);
       if (this.states[id] !== undefined) {
         this.states[id] = value;
         await this.setStateAsync(id, value, ack);
