@@ -151,9 +151,6 @@ export class OwnRingCamera extends OwnRingDevice {
     this.updateDeviceInfoObject(ringDevice.data as CameraData);
     this.updateHealth();
     this.updateHistory();
-    // this.updateSnapshotRequest();
-    // this.updateHDSnapshotRequest();
-    // this.updateLivestreamRequest();
     this.autoSched();
     this.subscribeToEvents();
   }
@@ -606,6 +603,9 @@ export class OwnRingCamera extends OwnRingDevice {
       COMMON_LIVESTREAM_AUTO,
       this._adapter.config.auto_livestream,
     );
+    this.updateSnapshotRequest();
+    this.updateHDSnapshotRequest();
+    this.updateLivestreamRequest();
 
     // Remove legacy states
     this._adapter.delObject(`${this.snapshotChannelId}.snapshot_request`);

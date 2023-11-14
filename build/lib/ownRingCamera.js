@@ -79,9 +79,6 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
         this.updateDeviceInfoObject(ringDevice.data);
         this.updateHealth();
         this.updateHistory();
-        // this.updateSnapshotRequest();
-        // this.updateHDSnapshotRequest();
-        // this.updateLivestreamRequest();
         this.autoSched();
         this.subscribeToEvents();
     }
@@ -441,6 +438,9 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
         this._adapter.upsertState(`${this.snapshotChannelId}.auto`, constants_1.COMMON_SNAPSHOT_AUTO, this._adapter.config.auto_snapshot);
         this._adapter.upsertState(`${this.HDsnapshotChannelId}.auto`, constants_1.COMMON_HDSNAPSHOT_AUTO, this._adapter.config.auto_HDsnapshot);
         this._adapter.upsertState(`${this.liveStreamChannelId}.auto`, constants_1.COMMON_LIVESTREAM_AUTO, this._adapter.config.auto_livestream);
+        this.updateSnapshotRequest();
+        this.updateHDSnapshotRequest();
+        this.updateLivestreamRequest();
         // Remove legacy states
         this._adapter.delObject(`${this.snapshotChannelId}.snapshot_request`);
         this._adapter.delObject(`${this.snapshotChannelId}.snapshot_file`);
