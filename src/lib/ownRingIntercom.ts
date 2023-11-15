@@ -120,6 +120,7 @@ export class OwnRingIntercom extends OwnRingDevice {
     this._ringIntercom.onDing.subscribe(
       {
         next: (): void => {
+          this.warn("onDing subscription");
           this.onDing();
         },
         error: (err: Error): void => {
@@ -148,6 +149,7 @@ export class OwnRingIntercom extends OwnRingDevice {
   }
 
   private onDing(): void {
+    this.warn("onDing event");
     if (this._dingEventBlocker.checkBlock()) {
       this.debug(`ignore Ding event...`);
       return;

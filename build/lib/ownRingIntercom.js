@@ -70,6 +70,7 @@ class OwnRingIntercom extends ownRingDevice_1.OwnRingDevice {
         });
         this._ringIntercom.onDing.subscribe({
             next: () => {
+                this.warn("onDing subscription");
                 this.onDing();
             },
             error: (err) => {
@@ -83,6 +84,7 @@ class OwnRingIntercom extends ownRingDevice_1.OwnRingDevice {
         this._adapter.upsertState(`${this.infoChannelId}.description`, constants_1.COMMON_INFO_DESCRIPTION, data.description);
     }
     onDing() {
+        this.warn("onDing event");
         if (this._dingEventBlocker.checkBlock()) {
             this.debug(`ignore Ding event...`);
             return;
