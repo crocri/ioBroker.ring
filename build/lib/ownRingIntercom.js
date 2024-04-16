@@ -65,9 +65,11 @@ class OwnRingIntercom extends ownRingDevice_1.OwnRingDevice {
     }
     async subscribeToEvents() {
         this.silly(`Start device subscriptions`);
-        await this._ringIntercom.subscribeToDingEvents().catch((r) => {
-            this.catcher(`Failed subscribing to Ding Events for ${this._ringIntercom.name}`, r);
+        /*
+        await this._ringIntercom.subscribeToDingEvents().catch((r: any): void => {
+          this.catcher(`Failed subscribing to Ding Events for ${this._ringIntercom.name}`, r);
         });
+        */
         this._ringIntercom.onDing.subscribe({
             next: () => {
                 this.onDing();
