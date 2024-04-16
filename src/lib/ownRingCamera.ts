@@ -88,7 +88,6 @@ import { TextService } from "./services/text-service";
 enum EventState {
   Idle,
   ReactingOnMotion,
-  ReactingOnDing,
   ReactingOnDoorbell,
 }
 
@@ -118,6 +117,7 @@ export class OwnRingCamera extends OwnRingDevice {
   private _lastSnapShotDir: string = "";
   private _lastHDSnapShotDir: string = "";
   private _motionEventBlocker: EventBlocker;
+  private _notifyEventBlocker: EventBlocker;
   private _doorbellEventBlocker: EventBlocker;
 
   public constructor(ringDevice: RingCamera, location: OwnRingLocation, adapter: RingAdapter, apiClient: RingApiClient) {
@@ -130,6 +130,10 @@ export class OwnRingCamera extends OwnRingDevice {
       ringDevice.data.description,
     );
     this._motionEventBlocker = new EventBlocker(
+      this._adapter.config.ignore_events_Motion,
+      this._adapter.config.keep_ignoring_if_retriggered
+    );
+    this._notifyEventBlocker = new EventBlocker(
       this._adapter.config.ignore_events_Motion,
       this._adapter.config.keep_ignoring_if_retriggered
     );
@@ -380,7 +384,7 @@ export class OwnRingCamera extends OwnRingDevice {
       .then((result: Buffer & ExtendedResponse): Buffer & ExtendedResponse => result)
       .catch((err: any): Buffer & ExtendedResponse => {
         if (eventBased) {
-          this.warn("Taking Snapshot on Event failed. Will try again after livestream finished.");
+          this.warn("Taking Snapshot on Event failed (Livestream conflict?).");
         } else {
           this.catcher("Couldn't get Snapshot from api.", err);
         }
@@ -791,10 +795,10 @@ export class OwnRingCamera extends OwnRingDevice {
     this._ringDevice.onNewNotification.subscribe(
       {
         next: (ding: PushNotificationDing): void => {
-          this.onDing(ding);
+          this.onNotify(ding);
         },
         error: (err: Error): void => {
-          this.catcher(`Ding Observer received error`, err);
+          this.catcher(`Notify Observer received error`, err);
         },
       }
     );
@@ -1004,64 +1008,74 @@ export class OwnRingCamera extends OwnRingDevice {
     }
   }
 
-  private onDing(value: PushNotificationDing): void {
-    this.debug(`Received Ding Event (${util.inspect(value, true, 1)})`);
-    this.conditionalRecording(EventState.ReactingOnDing, value.ding.image_uuid);
-    this._adapter.upsertState(
-      `${this.eventsChannelId}.type`,
-      COMMON_EVENTS_TYPE,
-      value.subtype,
-    );
-    this._adapter.upsertState(
-      `${this.eventsChannelId}.detectionType`,
-      COMMON_EVENTS_DETECTIONTYPE,
-      value.ding.detection_type ?? value.subtype,
-    );
-    this._adapter.upsertState(
-      `${this.eventsChannelId}.created_at`,
-      COMMON_EVENTS_MOMENT,
-      Date.now(),
-    );
-    this._adapter.upsertState(
-      `${this.eventsChannelId}.message`,
-      COMMON_EVENTS_MESSAGE,
-      value.aps.alert,
-    );
+  private onNotify(value: PushNotificationDing): void {
+    this.debug(`Received Notify Event (${util.inspect(value, true, 1)})`);
+    if (value) {
+      if (this._notifyEventBlocker.checkBlock()) {
+        this.debug(`ignore Notify event...`);
+        return;
+      }
+      this._adapter.upsertState(
+        `${this.eventsChannelId}.type`,
+        COMMON_EVENTS_TYPE,
+        value.subtype,
+      );
+      this._adapter.upsertState(
+        `${this.eventsChannelId}.detectionType`,
+        COMMON_EVENTS_DETECTIONTYPE,
+        value.ding.detection_type ?? value.subtype,
+      );
+      this._adapter.upsertState(
+        `${this.eventsChannelId}.created_at`,
+        COMMON_EVENTS_MOMENT,
+        Date.now(),
+      );
+      this._adapter.upsertState(
+        `${this.eventsChannelId}.message`,
+        COMMON_EVENTS_MESSAGE,
+        value.aps.alert,
+      );
+    }
   }
 
   private onMotion(value: boolean): void {
-    if (value && this._motionEventBlocker.checkBlock()) {
-      this.debug(`ignore Motion event...`);
-      return;
+    // value = true -> on motion
+    if (value) {
+      if (this._motionEventBlocker.checkBlock()) {
+        this.debug(`ignore Motion event...`);
+        return;
+      }
+      this.debug(`Received Motion Event (${util.inspect(value, true, 1)})`);
+      this._adapter.upsertState(
+        `${this.eventsChannelId}.motion`,
+        COMMON_MOTION,
+        value,
+      );
+      this.conditionalRecording(EventState.ReactingOnMotion);
     }
-    this.debug(`Received Motion Event (${util.inspect(value, true, 1)})`);
-    this._adapter.upsertState(
-      `${this.eventsChannelId}.motion`,
-      COMMON_MOTION,
-      value,
-    );
-    value && this.conditionalRecording(EventState.ReactingOnMotion);
   }
 
   private onDoorbell(value: PushNotificationDing): void {
-    if (value && this._doorbellEventBlocker.checkBlock()) {
-      this.debug(`ignore Doorbell event...`);
-      return;
-    }
-    this.debug(`Received Doorbell Event (${util.inspect(value, true, 1)})`);
-    this._adapter.upsertState(
-      `${this.eventsChannelId}.doorbell`,
-      COMMON_EVENTS_DOORBELL,
-      true,
-    );
-    setTimeout((): void => {
+    if (value) {
+      if (this._doorbellEventBlocker.checkBlock()) {
+        this.debug(`ignore Doorbell event...`);
+        return;
+      }
+      this.debug(`Received Doorbell Event (${util.inspect(value, true, 1)})`);
       this._adapter.upsertState(
         `${this.eventsChannelId}.doorbell`,
         COMMON_EVENTS_DOORBELL,
-        false,
+        true,
       );
-    }, 1000);
-    this.conditionalRecording(EventState.ReactingOnDoorbell, value.ding.image_uuid);
+      setTimeout((): void => {
+        this._adapter.upsertState(
+          `${this.eventsChannelId}.doorbell`,
+          COMMON_EVENTS_DOORBELL,
+          false,
+        );
+      }, 1000);
+      this.conditionalRecording(EventState.ReactingOnDoorbell, value.ding.image_uuid);
+    }
   }
 
   private async conditionalRecording(state: EventState, uuid?: string): Promise<void> {
@@ -1085,8 +1099,8 @@ export class OwnRingCamera extends OwnRingDevice {
     this.silly(`Start recording for Event "${EventState[state]}"...`);
     this._state = state;
     try {
+      this._adapter.config.auto_snapshot && /* !this._ringDevice.hasBattery && */ await this.takeSnapshot(uuid, true);
       this._adapter.config.auto_HDsnapshot && await this.takeHDSnapshot();
-      this._adapter.config.auto_snapshot && !this._ringDevice.hasBattery && await this.takeSnapshot(uuid, true);
       this._adapter.config.auto_livestream && await this.startLivestream(this._adapter.config.recordtime_auto_livestream);
     } finally {
       this._state = EventState.Idle;
