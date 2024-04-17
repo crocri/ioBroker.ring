@@ -23,10 +23,19 @@
           "md": 8,
           "lg": 6
         },
+        "_staticText0": {
+          "newLine": true,
+          "style": {"fontSize": "130%", "fontWeight": "bold"},
+          "type": "staticText",
+          "text": "Renew registration",
+          "sm": 12,
+          "md": 6,
+          "lg": 3
+        },
         "renew_registration": {
           "newLine": true,
           "type": "select",
-          "label": "Renew registration",
+          "label": "",
           "options": [
             {
               "value": 0,
