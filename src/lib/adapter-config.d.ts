@@ -36,6 +36,7 @@ declare global {
       keep_ignoring_if_retriggered: boolean;
       pollsec: number;
       refreshtoken: string;
+      renew_registration: number;
       twofaceauth: boolean;
     }
   }

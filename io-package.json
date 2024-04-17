@@ -212,6 +212,7 @@
     "password": "password",
     "pollsec": 15,
     "refreshtoken": "",
+    "renew_registration": 0,
     "sentry_enable": true,
     "timeout": 5,
     "twofaceauth": false,
