@@ -63,19 +63,15 @@ export class RingAdapter extends Adapter {
     return { device, channel, stateName };
   }
 
-  public upsertState(
-    id: string,
-    common: Partial<ioBroker.StateCommon>,
-    value: ioBroker.StateValue,
-    ack: boolean = true,
-    subscribe: boolean = false
-  ): void {
+  public async upsertState(
+    id: string, common: Partial<ioBroker.StateCommon>, value: ioBroker.StateValue, 
+    ack: boolean = true, subscribe: boolean = false): Promise<void> {
     if (this.states[id] === value && !subscribe) {
       // Unchanged and from user not changeable Value
       return;
     }
     // noinspection JSIgnoredPromiseFromCall
-    this.upsertStateAsync(id, common, value, ack, subscribe);
+    await this.upsertStateAsync(id, common, value, ack, subscribe);
   }
 
   /**
