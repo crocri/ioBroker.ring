@@ -25,13 +25,13 @@ class OwnRingIntercom extends ownRingDevice_1.OwnRingDevice {
                 switch (stateID) {
                     case constants_1.STATE_ID_DEBUG_REQUEST:
                         if (targetBoolVal) {
-                            this._adapter.log.info(`Device Debug Data for ${this.shortId}: ${util_1.default.inspect(this._ringIntercom, false, 1)}`);
+                            this.info(`Device Debug Data for ${this.shortId}: ${util_1.default.inspect(this._ringIntercom, false, 1)}`);
                             this._adapter.upsertState(`${this.fullId}.${constants_1.STATE_ID_DEBUG_REQUEST}`, constants_1.COMMON_DEBUG_REQUEST, false);
                         }
                         break;
                     case constants_1.STATE_ID_INTERCOM_UNLOCK:
                         if (targetBoolVal) {
-                            this._adapter.log.info(`Unlock door request for ${this.shortId}.`);
+                            this.info(`Unlock door request for ${this.shortId}.`);
                             this._ringIntercom.unlock().catch((reason) => {
                                 this.catcher("Couldn't unlock door.", reason);
                             });
@@ -41,7 +41,7 @@ class OwnRingIntercom extends ownRingDevice_1.OwnRingDevice {
                 }
                 return;
             default:
-                this._adapter.log.error(`Unknown State/Switch with channel "${channelID}" and state "${stateID}"`);
+                this.error(`Unknown State/Switch with channel "${channelID}" and state "${stateID}"`);
         }
     }
     updateByDevice(intercom) {
@@ -56,8 +56,8 @@ class OwnRingIntercom extends ownRingDevice_1.OwnRingDevice {
         });
         this._adapter.createChannel(this.fullId, constants_1.CHANNEL_NAME_INFO, { name: `Info ${this.shortId}` });
         this._adapter.createChannel(this.fullId, constants_1.CHANNEL_NAME_EVENTS);
-        this._adapter.upsertState(`${this.fullId}.${constants_1.STATE_ID_DEBUG_REQUEST}`, constants_1.COMMON_DEBUG_REQUEST, false, true);
-        this._adapter.upsertState(`${this.fullId}.${constants_1.STATE_ID_INTERCOM_UNLOCK}`, constants_1.COMMON_INTERCOM_UNLOCK_REQUEST, false, true);
+        await this._adapter.upsertState(`${this.fullId}.${constants_1.STATE_ID_DEBUG_REQUEST}`, constants_1.COMMON_DEBUG_REQUEST, false, true, true);
+        await this._adapter.upsertState(`${this.fullId}.${constants_1.STATE_ID_INTERCOM_UNLOCK}`, constants_1.COMMON_INTERCOM_UNLOCK_REQUEST, false, true, true);
     }
     update(data) {
         this.debug(`Received Update`);
@@ -65,11 +65,9 @@ class OwnRingIntercom extends ownRingDevice_1.OwnRingDevice {
     }
     async subscribeToEvents() {
         this.silly(`Start device subscriptions`);
-        /*
-        await this._ringIntercom.subscribeToDingEvents().catch((r: any): void => {
-          this.catcher(`Failed subscribing to Ding Events for ${this._ringIntercom.name}`, r);
+        await this._ringIntercom.subscribeToDingEvents().catch((r) => {
+            this.catcher(`Failed subscribing to Ding Events for ${this._ringIntercom.name}`, r);
         });
-        */
         this._ringIntercom.onDing.subscribe({
             next: () => {
                 this.onDing();
@@ -85,11 +83,11 @@ class OwnRingIntercom extends ownRingDevice_1.OwnRingDevice {
         this._adapter.upsertState(`${this.infoChannelId}.description`, constants_1.COMMON_INFO_DESCRIPTION, data.description);
     }
     onDing() {
+        this.debug(`Received Ding Event`);
         if (this._dingEventBlocker.checkBlock()) {
             this.debug(`ignore Ding event...`);
             return;
         }
-        this.debug(`Received Ding Event`);
         this._adapter.upsertState(`${this.eventsChannelId}.ding`, constants_1.COMMON_EVENTS_INTERCOM_DING, true);
         setTimeout(() => {
             this._adapter.upsertState(`${this.eventsChannelId}.ding`, constants_1.COMMON_EVENTS_INTERCOM_DING, false);

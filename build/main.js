@@ -84,13 +84,13 @@ class RingAdapter extends adapter_core_1.Adapter {
         }
         return { device, channel, stateName };
     }
-    upsertState(id, common, value, ack = true, subscribe = false) {
+    async upsertState(id, common, value, ack = true, subscribe = false) {
         if (this.states[id] === value && !subscribe) {
             // Unchanged and from user not changeable Value
             return;
         }
         // noinspection JSIgnoredPromiseFromCall
-        this.upsertStateAsync(id, common, value, ack, subscribe);
+        await this.upsertStateAsync(id, common, value, ack, subscribe);
     }
     /**
      * Is called when adapter shuts down - callback has to be called under any circumstances!
