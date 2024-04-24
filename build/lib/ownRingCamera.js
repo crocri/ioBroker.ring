@@ -262,8 +262,11 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
             return err;
         });
         if (!image.byteLength) {
-            if (!eventBased) {
-                this.warn("Could not create snapshot from image");
+            if (eventBased) {
+                this.warn("Taking Snapshot on Event failed (no image).");
+            }
+            else {
+                this.warn("Couldn't create snapshot from image");
             }
             await this.updateSnapshotRequest(false);
             return;
@@ -674,7 +677,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
             this._adapter.upsertState(`${this.eventsChannelId}.detectionType`, constants_1.COMMON_EVENTS_DETECTIONTYPE, (_a = value.ding.detection_type) !== null && _a !== void 0 ? _a : value.subtype);
             this._adapter.upsertState(`${this.eventsChannelId}.created_at`, constants_1.COMMON_EVENTS_MOMENT, Date.now());
             this._adapter.upsertState(`${this.eventsChannelId}.message`, constants_1.COMMON_EVENTS_MESSAGE, value.aps.alert);
-            this.conditionalRecording(EventState.ReactingOnMotion, value.ding.image_uuid);
+            // this.conditionalRecording(EventState.ReactingOnMotion, value.ding.image_uuid);
         }
     }
     onMotion(value) {
@@ -686,7 +689,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
                 return;
             }
             this._adapter.upsertState(`${this.eventsChannelId}.motion`, constants_1.COMMON_MOTION, value);
-            // this.conditionalRecording(EventState.ReactingOnMotion);
+            this.conditionalRecording(EventState.ReactingOnMotion);
         }
     }
     onDoorbell(value) {
@@ -708,7 +711,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
             if (this._adapter.config.auto_snapshot) {
                 setTimeout(() => {
                     this.debug(`delayed snapshot recording`);
-                    this.takeSnapshot(uuid);
+                    this.takeSnapshot(uuid, true);
                 }, this._adapter.config.recordtime_auto_livestream * 1000 + 3000);
             }
             if (this._adapter.config.auto_HDsnapshot) {
@@ -722,7 +725,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
         this.silly(`Start recording for Event "${EventState[state]}"...`);
         this._state = state;
         try {
-            this._adapter.config.auto_snapshot && /* !this._ringDevice.hasBattery && */ await this.takeSnapshot();
+            this._adapter.config.auto_snapshot && /* !this._ringDevice.hasBattery && */ await this.takeSnapshot(uuid, true);
             this._adapter.config.auto_HDsnapshot && await this.takeHDSnapshot();
             this._adapter.config.auto_livestream && await this.startLivestream(this._adapter.config.recordtime_auto_livestream);
             // give some time to evaluate motion state, e.g. for node-red
