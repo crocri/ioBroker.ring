@@ -89,6 +89,7 @@ import { TextService } from "./services/text-service";
 enum EventState {
   Idle,
   ReactingOnEvent,
+  ReactingOnDemand,
   ReactingOnMotion,
   ReactingOnDoorbell,
 }
@@ -869,18 +870,20 @@ export class OwnRingCamera extends OwnRingDevice {
 
   private onNotify(value: PushNotificationDing): void {
     this.debug(`Received Notify Event (${util.inspect(value, true, 1)})`);
-    if (value && value.ding.image_uuid) {
+    if (value) {
       if (this._notifyEventBlocker.checkBlock()) {
         this.debug(`ignore Notify event...`);
         return;
       }
-      this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, true);
       this._adapter.upsertState(`${this.eventsChannelId}.type`, COMMON_EVENTS_TYPE, value.subtype);
       this._adapter.upsertState(
         `${this.eventsChannelId}.detectionType`, COMMON_EVENTS_DETECTIONTYPE, value.ding.detection_type ?? value.subtype);
       this._adapter.upsertState(`${this.eventsChannelId}.created_at`, COMMON_EVENTS_MOMENT, Date.now());
       this._adapter.upsertState(`${this.eventsChannelId}.message`, COMMON_EVENTS_MESSAGE, value.aps.alert);
-      this.ondemandRecording(EventState.ReactingOnEvent, value.ding.image_uuid);
+      if (value.ding.image_uuid) {
+        this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, true);
+        this.ondemandRecording(EventState.ReactingOnDemand, value.ding.image_uuid);
+      }
     }
   }
 

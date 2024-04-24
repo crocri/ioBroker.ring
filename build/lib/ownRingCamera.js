@@ -44,8 +44,9 @@ var EventState;
 (function (EventState) {
     EventState[EventState["Idle"] = 0] = "Idle";
     EventState[EventState["ReactingOnEvent"] = 1] = "ReactingOnEvent";
-    EventState[EventState["ReactingOnMotion"] = 2] = "ReactingOnMotion";
-    EventState[EventState["ReactingOnDoorbell"] = 3] = "ReactingOnDoorbell";
+    EventState[EventState["ReactingOnDemand"] = 2] = "ReactingOnDemand";
+    EventState[EventState["ReactingOnMotion"] = 3] = "ReactingOnMotion";
+    EventState[EventState["ReactingOnDoorbell"] = 4] = "ReactingOnDoorbell";
 })(EventState || (EventState = {}));
 class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
     constructor(ringDevice, location, adapter, apiClient) {
@@ -671,17 +672,19 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
     onNotify(value) {
         var _a;
         this.debug(`Received Notify Event (${util.inspect(value, true, 1)})`);
-        if (value && value.ding.image_uuid) {
+        if (value) {
             if (this._notifyEventBlocker.checkBlock()) {
                 this.debug(`ignore Notify event...`);
                 return;
             }
-            this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, constants_1.COMMON_ON_DEMAND, true);
             this._adapter.upsertState(`${this.eventsChannelId}.type`, constants_1.COMMON_EVENTS_TYPE, value.subtype);
             this._adapter.upsertState(`${this.eventsChannelId}.detectionType`, constants_1.COMMON_EVENTS_DETECTIONTYPE, (_a = value.ding.detection_type) !== null && _a !== void 0 ? _a : value.subtype);
             this._adapter.upsertState(`${this.eventsChannelId}.created_at`, constants_1.COMMON_EVENTS_MOMENT, Date.now());
             this._adapter.upsertState(`${this.eventsChannelId}.message`, constants_1.COMMON_EVENTS_MESSAGE, value.aps.alert);
-            this.ondemandRecording(EventState.ReactingOnEvent, value.ding.image_uuid);
+            if (value.ding.image_uuid) {
+                this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, constants_1.COMMON_ON_DEMAND, true);
+                this.ondemandRecording(EventState.ReactingOnDemand, value.ding.image_uuid);
+            }
         }
     }
     onMotion(value) {
