@@ -380,32 +380,18 @@ export class OwnRingCamera extends OwnRingDevice {
       return;
     }
 
-    let image: Buffer & ExtendedResponse;
-    if (uuid) {
-      image = await this._ringDevice.getSnapshotByUuid(uuid)
-        .then((result: Buffer & ExtendedResponse): Buffer & ExtendedResponse => result)
-        .catch((err: any): Buffer & ExtendedResponse => {
-          if (eventBased) {
-            this.warn("Taking Snapshot on Event failed (Livestream conflict?).");
-          } else {
-            this.catcher("Couldn't get Snapshot from api.", err);
-          }
-          this.updateSnapshotRequest(false);
-          return err;
-        });
-    } else {
-      image = await this._ringDevice.getNextSnapshot({force: true, uuid: uuid})
-        .then((result: Buffer & ExtendedResponse): Buffer & ExtendedResponse => result)
-        .catch((err: any): Buffer & ExtendedResponse => {
-          if (eventBased) {
-            this.warn("Taking Snapshot on Event failed (Livestream conflict?).");
-          } else {
-            this.catcher("Couldn't get Snapshot from api.", err);
-          }
-          this.updateSnapshotRequest(false);
-          return err;
-        });
-    }
+    const image: Buffer & ExtendedResponse = await this._ringDevice.getNextSnapshot({force: true, uuid: uuid})
+      .then((result: Buffer & ExtendedResponse): Buffer & ExtendedResponse => result)
+      .catch((err: any): Buffer & ExtendedResponse => {
+        if (eventBased) {
+          this.warn("Taking Snapshot on Event failed.");
+        } else {
+          this.catcher("Couldn't get Snapshot from api.", err);
+        }
+        this.updateSnapshotRequest(false);
+        return err;
+      });
+
     if (!image.byteLength) {
       if (eventBased) {
         this.warn("Taking Snapshot on Event failed (no image).");
@@ -932,19 +918,21 @@ export class OwnRingCamera extends OwnRingDevice {
           this.takeSnapshot(uuid, true);
         }, this._adapter.config.recordtime_auto_livestream * 1000 + 3000);
       }
+      /*
       if (this._adapter.config.auto_HDsnapshot) {
         setTimeout((): void => {
           this.debug(`delayed HD snapshot recording`);
           this.takeHDSnapshot();
         }, this._adapter.config.recordtime_auto_livestream * 1000 + 5000);
       }
+      */
       return;
     }
 
     this.silly(`Start recording for Event "${EventState[state]}"...`);
     this._state = state;
     try {
-      this._adapter.config.auto_snapshot && /* !this._ringDevice.hasBattery && */ await this.takeSnapshot(uuid, true);
+      this._adapter.config.auto_snapshot && !this._ringDevice.hasBattery && await this.takeSnapshot(uuid, true);
       this._adapter.config.auto_HDsnapshot && await this.takeHDSnapshot();
       this._adapter.config.auto_livestream && await this.startLivestream(this._adapter.config.recordtime_auto_livestream);
       // give some time to evaluate motion state, e.g. for node-red
