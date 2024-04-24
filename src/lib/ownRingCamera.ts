@@ -62,6 +62,7 @@ import {
   COMMON_LIVESTREAM_REQUEST,
   COMMON_LIVESTREAM_URL,
   COMMON_MOTION,
+  COMMON_ON_DEMAND,
   COMMON_SNAPSHOT_AUTO,
   COMMON_SNAPSHOT_FILE,
   COMMON_SNAPSHOT_MOMENT,
@@ -87,6 +88,7 @@ import { TextService } from "./services/text-service";
 
 enum EventState {
   Idle,
+  ReactingOnEvent,
   ReactingOnMotion,
   ReactingOnDoorbell,
 }
@@ -369,14 +371,14 @@ export class OwnRingCamera extends OwnRingDevice {
 
     if (!(await FileService.prepareFolder(dirname))) {
       this.warn(`prepare folder problem --> won't take Snapshot`);
-      await this.updateSnapshotRequest(false);
+      await this.updateSnapshotRequest(uuid, false);
       return;
     }
     FileService.deleteFileIfExistSync(fullPath, this._adapter);
 
     if (this._ringDevice.isOffline) {
       this.info(`is offline --> won't take Snapshot`);
-      await this.updateSnapshotRequest(false);
+      await this.updateSnapshotRequest(uuid, false);
       return;
     }
 
@@ -388,7 +390,7 @@ export class OwnRingCamera extends OwnRingDevice {
         } else {
           this.catcher("Couldn't get Snapshot from api.", err);
         }
-        this.updateSnapshotRequest(false);
+        this.updateSnapshotRequest(uuid, false);
         return err;
       });
 
@@ -398,7 +400,7 @@ export class OwnRingCamera extends OwnRingDevice {
       } else {
         this.warn("Couldn't create snapshot from image");
       }
-      await this.updateSnapshotRequest(false);
+      await this.updateSnapshotRequest(uuid, false);
       return;
     } else {
       this.silly(`Response timestamp: ${image.responseTimestamp}, 
@@ -435,7 +437,7 @@ export class OwnRingCamera extends OwnRingDevice {
     }
     this.silly(`Writing Snapshot (Length: ${image.length}) to "${fullPath}"`);
     await FileService.writeFile(fullPath, image_txt, this._adapter);
-    await this.updateSnapshotObject();
+    await this.updateSnapshotObject(uuid);
     this.debug(`Done creating snapshot to ${fullPath}`);
   }
 
@@ -667,8 +669,6 @@ export class OwnRingCamera extends OwnRingDevice {
     this.updateDeviceInfoObject(data as CameraData);
     this.updateHealth();
     this.updateHistory();
-    // this.updateSnapshotObject();
-    // this.updateHDSnapshotObject();
   }
 
   public setDurationLivestream(val: number): void {
@@ -798,8 +798,9 @@ export class OwnRingCamera extends OwnRingDevice {
     this._adapter.upsertState(`${this.historyChannelId}.kind`, COMMON_HISTORY_KIND, lastAction.event.kind);
   }
 
-  private async updateSnapshotRequest(ack: boolean = true): Promise<void> {
+  private async updateSnapshotRequest(uuid: string = "", ack: boolean = true): Promise<void> {
     this._adapter.upsertState(`${this.snapshotChannelId}.${STATE_ID_SNAPSHOT_REQUEST}`, COMMON_SNAPSHOT_REQUEST, false, ack);
+    if (uuid) this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, false, true);
   }
 
   private async updateHDSnapshotRequest(ack: boolean = true): Promise<void> {
@@ -813,14 +814,14 @@ export class OwnRingCamera extends OwnRingDevice {
       `${this.liveStreamChannelId}.${STATE_ID_LIVESTREAM_DURATION}`, COMMON_LIVESTREAM_DURATION, this._durationLiveStream, ack);
   }
 
-  private async updateSnapshotObject(): Promise<void> {
+  private async updateSnapshotObject(uuid: string = ""): Promise<void> {
     this.debug(`Update Snapshot Object`);
     if (this._lastSnapshotTimestamp !== 0) {
       this._adapter.upsertState(`${this.snapshotChannelId}.file`, COMMON_SNAPSHOT_FILE, this._lastSnapShotDir);
       this._adapter.upsertState(`${this.snapshotChannelId}.moment`, COMMON_SNAPSHOT_MOMENT, this._lastSnapshotTimestamp);
       this._adapter.upsertState(`${this.snapshotChannelId}.url`, COMMON_SNAPSHOT_URL, this._lastSnapShotUrl);
     }
-    await this.updateSnapshotRequest();
+    await this.updateSnapshotRequest(uuid);
   }
 
   private async updateHDSnapshotObject(): Promise<void> {
@@ -868,17 +869,18 @@ export class OwnRingCamera extends OwnRingDevice {
 
   private onNotify(value: PushNotificationDing): void {
     this.debug(`Received Notify Event (${util.inspect(value, true, 1)})`);
-    if (value) {
+    if (value && value.ding.image_uuid) {
       if (this._notifyEventBlocker.checkBlock()) {
         this.debug(`ignore Notify event...`);
         return;
       }
+      this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, true);
       this._adapter.upsertState(`${this.eventsChannelId}.type`, COMMON_EVENTS_TYPE, value.subtype);
       this._adapter.upsertState(
         `${this.eventsChannelId}.detectionType`, COMMON_EVENTS_DETECTIONTYPE, value.ding.detection_type ?? value.subtype);
       this._adapter.upsertState(`${this.eventsChannelId}.created_at`, COMMON_EVENTS_MOMENT, Date.now());
       this._adapter.upsertState(`${this.eventsChannelId}.message`, COMMON_EVENTS_MESSAGE, value.aps.alert);
-      this.conditionalRecording(EventState.ReactingOnMotion, value.ding.image_uuid);
+      this.ondemandRecording(EventState.ReactingOnEvent, value.ding.image_uuid);
     }
   }
 
@@ -891,7 +893,7 @@ export class OwnRingCamera extends OwnRingDevice {
         return;
       }
       this._adapter.upsertState(`${this.eventsChannelId}.motion`, COMMON_MOTION, value);
-      // this.conditionalRecording(EventState.ReactingOnMotion);
+      this.motionRecording(EventState.ReactingOnMotion);
     }
   }
 
@@ -909,30 +911,10 @@ export class OwnRingCamera extends OwnRingDevice {
     }
   }
 
-  private async conditionalRecording(state: EventState, uuid?: string): Promise<void> {
-    if (this._state !== EventState.Idle) {
-      this.silly(`Would have recorded due to "${EventState[state]}", but we are already reacting.`);
-      if (this._adapter.config.auto_snapshot) {
-        setTimeout((): void => {
-          this.debug(`delayed snapshot recording`);
-          this.takeSnapshot(uuid, true);
-        }, this._adapter.config.recordtime_auto_livestream * 1000 + 3000);
-      }
-      /*
-      if (this._adapter.config.auto_HDsnapshot) {
-        setTimeout((): void => {
-          this.debug(`delayed HD snapshot recording`);
-          this.takeHDSnapshot();
-        }, this._adapter.config.recordtime_auto_livestream * 1000 + 5000);
-      }
-      */
-      return;
-    }
-
-    this.silly(`Start recording for Event "${EventState[state]}"...`);
+  private async motionRecording(state: EventState): Promise<void> {
+    this.silly(`Start recording for motion event "${EventState[state]}"...`);
     this._state = state;
     try {
-      this._adapter.config.auto_snapshot && !this._ringDevice.hasBattery && await this.takeSnapshot(uuid, true);
       this._adapter.config.auto_HDsnapshot && await this.takeHDSnapshot();
       this._adapter.config.auto_livestream && await this.startLivestream(this._adapter.config.recordtime_auto_livestream);
       // give some time to evaluate motion state, e.g. for node-red
@@ -940,6 +922,33 @@ export class OwnRingCamera extends OwnRingDevice {
         this._adapter.upsertState(`${this.eventsChannelId}.motion`, COMMON_MOTION, false, true);
       }, 200);
       this.debug("Recording of motion finished.");
+    } finally {
+      this._state = EventState.Idle;
+    }
+    return;
+  }
+
+  private async ondemandRecording(state: EventState, uuid: string): Promise<void> {
+    if (this._state !== EventState.Idle) {
+      this.silly(`Would have recorded due to "${EventState[state]}", but we are already reacting.`);
+      if (this._adapter.config.auto_snapshot) {
+        setTimeout((): void => {
+          this.debug(`delayed snapshot recording`);
+          this.takeSnapshot(uuid, true);
+        }, 2000);
+      }
+      return;
+    }
+
+    this.silly(`Start recording for Event "${EventState[state]}"...`);
+    this._state = state;
+    try {
+      this._adapter.config.auto_snapshot /* && !this._ringDevice.hasBattery */ && await this.takeSnapshot(uuid, true);
+      // give some time to evaluate motion state, e.g. for node-red
+      setTimeout(() => {
+        this._adapter.upsertState(`${this.eventsChannelId}.event`, COMMON_ON_DEMAND, false, true);
+      }, 200);
+      this.debug("Recording of event finished.");
     } finally {
       this._state = EventState.Idle;
     }

@@ -43,8 +43,9 @@ const text_service_1 = require("./services/text-service");
 var EventState;
 (function (EventState) {
     EventState[EventState["Idle"] = 0] = "Idle";
-    EventState[EventState["ReactingOnMotion"] = 1] = "ReactingOnMotion";
-    EventState[EventState["ReactingOnDoorbell"] = 2] = "ReactingOnDoorbell";
+    EventState[EventState["ReactingOnEvent"] = 1] = "ReactingOnEvent";
+    EventState[EventState["ReactingOnMotion"] = 2] = "ReactingOnMotion";
+    EventState[EventState["ReactingOnDoorbell"] = 3] = "ReactingOnDoorbell";
 })(EventState || (EventState = {}));
 class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
     constructor(ringDevice, location, adapter, apiClient) {
@@ -241,13 +242,13 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
         const { fullPath, dirname } = file_service_1.FileService.getPath(this._adapter.config.path_snapshot, this._adapter.config.filename_snapshot, ++this._HDsnapshotCount, this.shortId, this.fullId, this.kind);
         if (!(await file_service_1.FileService.prepareFolder(dirname))) {
             this.warn(`prepare folder problem --> won't take Snapshot`);
-            await this.updateSnapshotRequest(false);
+            await this.updateSnapshotRequest(uuid, false);
             return;
         }
         file_service_1.FileService.deleteFileIfExistSync(fullPath, this._adapter);
         if (this._ringDevice.isOffline) {
             this.info(`is offline --> won't take Snapshot`);
-            await this.updateSnapshotRequest(false);
+            await this.updateSnapshotRequest(uuid, false);
             return;
         }
         const image = await this._ringDevice.getNextSnapshot({ force: true, uuid: uuid })
@@ -259,7 +260,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
             else {
                 this.catcher("Couldn't get Snapshot from api.", err);
             }
-            this.updateSnapshotRequest(false);
+            this.updateSnapshotRequest(uuid, false);
             return err;
         });
         if (!image.byteLength) {
@@ -269,7 +270,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
             else {
                 this.warn("Couldn't create snapshot from image");
             }
-            await this.updateSnapshotRequest(false);
+            await this.updateSnapshotRequest(uuid, false);
             return;
         }
         else {
@@ -300,7 +301,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
         }
         this.silly(`Writing Snapshot (Length: ${image.length}) to "${fullPath}"`);
         await file_service_1.FileService.writeFile(fullPath, image_txt, this._adapter);
-        await this.updateSnapshotObject();
+        await this.updateSnapshotObject(uuid);
         this.debug(`Done creating snapshot to ${fullPath}`);
     }
     async updateHistory() {
@@ -499,8 +500,6 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
         this.updateDeviceInfoObject(data);
         this.updateHealth();
         this.updateHistory();
-        // this.updateSnapshotObject();
-        // this.updateHDSnapshotObject();
     }
     setDurationLivestream(val) {
         this.silly(`${this.shortId}.durationLivestream()`);
@@ -609,8 +608,10 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
         this._adapter.upsertState(`${this.historyChannelId}.history_url`, constants_1.COMMON_HISTORY_URL, lastAction.historyUrl);
         this._adapter.upsertState(`${this.historyChannelId}.kind`, constants_1.COMMON_HISTORY_KIND, lastAction.event.kind);
     }
-    async updateSnapshotRequest(ack = true) {
+    async updateSnapshotRequest(uuid = "", ack = true) {
         this._adapter.upsertState(`${this.snapshotChannelId}.${constants_1.STATE_ID_SNAPSHOT_REQUEST}`, constants_1.COMMON_SNAPSHOT_REQUEST, false, ack);
+        if (uuid)
+            this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, constants_1.COMMON_ON_DEMAND, false, true);
     }
     async updateHDSnapshotRequest(ack = true) {
         this._adapter.upsertState(`${this.HDsnapshotChannelId}.${constants_1.STATE_ID_HDSNAPSHOT_REQUEST}`, constants_1.COMMON_HDSNAPSHOT_REQUEST, false, ack);
@@ -620,14 +621,14 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
         this._durationLiveStream = this._adapter.config.recordtime_livestream;
         this._adapter.upsertState(`${this.liveStreamChannelId}.${constants_1.STATE_ID_LIVESTREAM_DURATION}`, constants_1.COMMON_LIVESTREAM_DURATION, this._durationLiveStream, ack);
     }
-    async updateSnapshotObject() {
+    async updateSnapshotObject(uuid = "") {
         this.debug(`Update Snapshot Object`);
         if (this._lastSnapshotTimestamp !== 0) {
             this._adapter.upsertState(`${this.snapshotChannelId}.file`, constants_1.COMMON_SNAPSHOT_FILE, this._lastSnapShotDir);
             this._adapter.upsertState(`${this.snapshotChannelId}.moment`, constants_1.COMMON_SNAPSHOT_MOMENT, this._lastSnapshotTimestamp);
             this._adapter.upsertState(`${this.snapshotChannelId}.url`, constants_1.COMMON_SNAPSHOT_URL, this._lastSnapShotUrl);
         }
-        await this.updateSnapshotRequest();
+        await this.updateSnapshotRequest(uuid);
     }
     async updateHDSnapshotObject() {
         this.debug(`Update HD Snapshot Object`);
@@ -670,16 +671,17 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
     onNotify(value) {
         var _a;
         this.debug(`Received Notify Event (${util.inspect(value, true, 1)})`);
-        if (value) {
+        if (value && value.ding.image_uuid) {
             if (this._notifyEventBlocker.checkBlock()) {
                 this.debug(`ignore Notify event...`);
                 return;
             }
+            this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, constants_1.COMMON_ON_DEMAND, true);
             this._adapter.upsertState(`${this.eventsChannelId}.type`, constants_1.COMMON_EVENTS_TYPE, value.subtype);
             this._adapter.upsertState(`${this.eventsChannelId}.detectionType`, constants_1.COMMON_EVENTS_DETECTIONTYPE, (_a = value.ding.detection_type) !== null && _a !== void 0 ? _a : value.subtype);
             this._adapter.upsertState(`${this.eventsChannelId}.created_at`, constants_1.COMMON_EVENTS_MOMENT, Date.now());
             this._adapter.upsertState(`${this.eventsChannelId}.message`, constants_1.COMMON_EVENTS_MESSAGE, value.aps.alert);
-            this.conditionalRecording(EventState.ReactingOnMotion, value.ding.image_uuid);
+            this.ondemandRecording(EventState.ReactingOnEvent, value.ding.image_uuid);
         }
     }
     onMotion(value) {
@@ -691,7 +693,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
                 return;
             }
             this._adapter.upsertState(`${this.eventsChannelId}.motion`, constants_1.COMMON_MOTION, value);
-            // this.conditionalRecording(EventState.ReactingOnMotion);
+            this.motionRecording(EventState.ReactingOnMotion);
         }
     }
     onDoorbell(value) {
@@ -707,29 +709,10 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
             }, 1000);
         }
     }
-    async conditionalRecording(state, uuid) {
-        if (this._state !== EventState.Idle) {
-            this.silly(`Would have recorded due to "${EventState[state]}", but we are already reacting.`);
-            if (this._adapter.config.auto_snapshot) {
-                setTimeout(() => {
-                    this.debug(`delayed snapshot recording`);
-                    this.takeSnapshot(uuid, true);
-                }, this._adapter.config.recordtime_auto_livestream * 1000 + 3000);
-            }
-            /*
-            if (this._adapter.config.auto_HDsnapshot) {
-              setTimeout((): void => {
-                this.debug(`delayed HD snapshot recording`);
-                this.takeHDSnapshot();
-              }, this._adapter.config.recordtime_auto_livestream * 1000 + 5000);
-            }
-            */
-            return;
-        }
-        this.silly(`Start recording for Event "${EventState[state]}"...`);
+    async motionRecording(state) {
+        this.silly(`Start recording for motion event "${EventState[state]}"...`);
         this._state = state;
         try {
-            this._adapter.config.auto_snapshot && !this._ringDevice.hasBattery && await this.takeSnapshot(uuid, true);
             this._adapter.config.auto_HDsnapshot && await this.takeHDSnapshot();
             this._adapter.config.auto_livestream && await this.startLivestream(this._adapter.config.recordtime_auto_livestream);
             // give some time to evaluate motion state, e.g. for node-red
@@ -737,6 +720,32 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
                 this._adapter.upsertState(`${this.eventsChannelId}.motion`, constants_1.COMMON_MOTION, false, true);
             }, 200);
             this.debug("Recording of motion finished.");
+        }
+        finally {
+            this._state = EventState.Idle;
+        }
+        return;
+    }
+    async ondemandRecording(state, uuid) {
+        if (this._state !== EventState.Idle) {
+            this.silly(`Would have recorded due to "${EventState[state]}", but we are already reacting.`);
+            if (this._adapter.config.auto_snapshot) {
+                setTimeout(() => {
+                    this.debug(`delayed snapshot recording`);
+                    this.takeSnapshot(uuid, true);
+                }, 2000);
+            }
+            return;
+        }
+        this.silly(`Start recording for Event "${EventState[state]}"...`);
+        this._state = state;
+        try {
+            this._adapter.config.auto_snapshot /* && !this._ringDevice.hasBattery */ && await this.takeSnapshot(uuid, true);
+            // give some time to evaluate motion state, e.g. for node-red
+            setTimeout(() => {
+                this._adapter.upsertState(`${this.eventsChannelId}.event`, constants_1.COMMON_ON_DEMAND, false, true);
+            }, 200);
+            this.debug("Recording of event finished.");
         }
         finally {
             this._state = EventState.Idle;
