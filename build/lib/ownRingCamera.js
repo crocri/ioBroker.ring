@@ -722,7 +722,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
         this.silly(`Start recording for Event "${EventState[state]}"...`);
         this._state = state;
         try {
-            this._adapter.config.auto_snapshot && /* !this._ringDevice.hasBattery && */ await this.takeSnapshot(uuid, true);
+            this._adapter.config.auto_snapshot && /* !this._ringDevice.hasBattery && */ await this.takeSnapshot();
             this._adapter.config.auto_HDsnapshot && await this.takeHDSnapshot();
             this._adapter.config.auto_livestream && await this.startLivestream(this._adapter.config.recordtime_auto_livestream);
             // give some time to evaluate motion state, e.g. for node-red
