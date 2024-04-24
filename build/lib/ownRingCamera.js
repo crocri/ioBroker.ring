@@ -259,6 +259,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
             else {
                 this.catcher("Couldn't get Snapshot from api.", err);
             }
+            this.updateSnapshotRequest(false);
             return err;
         });
         if (!image.byteLength) {
@@ -677,7 +678,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
             this._adapter.upsertState(`${this.eventsChannelId}.detectionType`, constants_1.COMMON_EVENTS_DETECTIONTYPE, (_a = value.ding.detection_type) !== null && _a !== void 0 ? _a : value.subtype);
             this._adapter.upsertState(`${this.eventsChannelId}.created_at`, constants_1.COMMON_EVENTS_MOMENT, Date.now());
             this._adapter.upsertState(`${this.eventsChannelId}.message`, constants_1.COMMON_EVENTS_MESSAGE, value.aps.alert);
-            // this.conditionalRecording(EventState.ReactingOnMotion, value.ding.image_uuid);
+            this.conditionalRecording(EventState.ReactingOnMotion, value.ding.image_uuid);
         }
     }
     onMotion(value) {
@@ -689,7 +690,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
                 return;
             }
             this._adapter.upsertState(`${this.eventsChannelId}.motion`, constants_1.COMMON_MOTION, value);
-            this.conditionalRecording(EventState.ReactingOnMotion);
+            // this.conditionalRecording(EventState.ReactingOnMotion);
         }
     }
     onDoorbell(value) {
