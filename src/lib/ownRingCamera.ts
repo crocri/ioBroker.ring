@@ -380,18 +380,32 @@ export class OwnRingCamera extends OwnRingDevice {
       return;
     }
 
-    const image: Buffer & ExtendedResponse = await this._ringDevice.getNextSnapshot({force: true, uuid: uuid})
-      .then((result: Buffer & ExtendedResponse): Buffer & ExtendedResponse => result)
-      .catch((err: any): Buffer & ExtendedResponse => {
-        if (eventBased) {
-          this.warn("Taking Snapshot on Event failed (Livestream conflict?).");
-        } else {
-          this.catcher("Couldn't get Snapshot from api.", err);
-        }
-        this.updateSnapshotRequest(false);
-        return err;
-      });
-
+    let image: Buffer & ExtendedResponse;
+    if (uuid) {
+      image = await this._ringDevice.getSnapshotByUuid(uuid)
+        .then((result: Buffer & ExtendedResponse): Buffer & ExtendedResponse => result)
+        .catch((err: any): Buffer & ExtendedResponse => {
+          if (eventBased) {
+            this.warn("Taking Snapshot on Event failed (Livestream conflict?).");
+          } else {
+            this.catcher("Couldn't get Snapshot from api.", err);
+          }
+          this.updateSnapshotRequest(false);
+          return err;
+        });
+    } else {
+      image = await this._ringDevice.getNextSnapshot({force: true, uuid: uuid})
+        .then((result: Buffer & ExtendedResponse): Buffer & ExtendedResponse => result)
+        .catch((err: any): Buffer & ExtendedResponse => {
+          if (eventBased) {
+            this.warn("Taking Snapshot on Event failed (Livestream conflict?).");
+          } else {
+            this.catcher("Couldn't get Snapshot from api.", err);
+          }
+          this.updateSnapshotRequest(false);
+          return err;
+        });
+    }
     if (!image.byteLength) {
       if (eventBased) {
         this.warn("Taking Snapshot on Event failed (no image).");

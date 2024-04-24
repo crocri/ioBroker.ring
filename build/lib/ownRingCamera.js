@@ -250,18 +250,35 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
             await this.updateSnapshotRequest(false);
             return;
         }
-        const image = await this._ringDevice.getNextSnapshot({ force: true, uuid: uuid })
-            .then((result) => result)
-            .catch((err) => {
-            if (eventBased) {
-                this.warn("Taking Snapshot on Event failed (Livestream conflict?).");
-            }
-            else {
-                this.catcher("Couldn't get Snapshot from api.", err);
-            }
-            this.updateSnapshotRequest(false);
-            return err;
-        });
+        let image;
+        if (uuid) {
+            image = await this._ringDevice.getSnapshotByUuid(uuid)
+                .then((result) => result)
+                .catch((err) => {
+                if (eventBased) {
+                    this.warn("Taking Snapshot on Event failed (Livestream conflict?).");
+                }
+                else {
+                    this.catcher("Couldn't get Snapshot from api.", err);
+                }
+                this.updateSnapshotRequest(false);
+                return err;
+            });
+        }
+        else {
+            image = await this._ringDevice.getNextSnapshot({ force: true, uuid: uuid })
+                .then((result) => result)
+                .catch((err) => {
+                if (eventBased) {
+                    this.warn("Taking Snapshot on Event failed (Livestream conflict?).");
+                }
+                else {
+                    this.catcher("Couldn't get Snapshot from api.", err);
+                }
+                this.updateSnapshotRequest(false);
+                return err;
+            });
+        }
         if (!image.byteLength) {
             if (eventBased) {
                 this.warn("Taking Snapshot on Event failed (no image).");
