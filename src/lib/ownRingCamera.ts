@@ -704,7 +704,7 @@ export class OwnRingCamera extends OwnRingDevice {
           fct: (): void => {
             this.takeHDSnapshot();
           },
-          start: 2
+          start: 20
         },
         {
           name: "Livestream",
@@ -712,26 +712,26 @@ export class OwnRingCamera extends OwnRingDevice {
           fct: (): void => {
             this.startLivestream();
           },
-          start: 4
+          start: 40
         }
       ];
 
     for (const m of media) {
       if (m.val > 0) {
+        let schedSec: string = m.start.toString();
         let schedMinute: string = "*";
-        let schedHour: string = "*";
+        const schedHour: string = "*";
         if (m.val === 3600) {
           schedMinute = "0";
-          schedHour = "1";
         } else if (m.val === 60) {
-          schedMinute = "1";
+          // nothing to set
         } else if (m.val < 60) {
-          schedMinute = `${m.start}-59/${m.val.toString()}`;
+          schedSec = `*/${m.val.toString()}`;
         }
-        this.info(`Create scheduled Job for ${m.name} at "${m.start * 10} ${schedMinute} ${schedHour} * * *"`);
+        this.info(`Create scheduled Job for ${m.name} at "${schedSec} ${schedMinute} ${schedHour} * * *"`);
         schedule.scheduleJob(
           `Auto save ${m.name}_${this._adapter.name}_${this._adapter.instance}`,
-          `${m.start * 10} ${schedMinute} ${schedHour} * * *`,
+          `${schedSec} ${schedMinute} ${schedHour} * * *`,
           (): void => {
             this.info(`Cronjob Auto save ${m.name} starts`);
             m.fct();
