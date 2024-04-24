@@ -388,6 +388,7 @@ export class OwnRingCamera extends OwnRingDevice {
         } else {
           this.catcher("Couldn't get Snapshot from api.", err);
         }
+        this.updateSnapshotRequest(false);
         return err;
       });
 
