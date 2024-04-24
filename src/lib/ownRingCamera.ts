@@ -919,6 +919,7 @@ export class OwnRingCamera extends OwnRingDevice {
         `${this.eventsChannelId}.detectionType`, COMMON_EVENTS_DETECTIONTYPE, value.ding.detection_type ?? value.subtype);
       this._adapter.upsertState(`${this.eventsChannelId}.created_at`, COMMON_EVENTS_MOMENT, Date.now());
       this._adapter.upsertState(`${this.eventsChannelId}.message`, COMMON_EVENTS_MESSAGE, value.aps.alert);
+      this.conditionalRecording(EventState.ReactingOnMotion, value.ding.image_uuid);
     }
   }
 
@@ -931,7 +932,7 @@ export class OwnRingCamera extends OwnRingDevice {
         return;
       }
       this._adapter.upsertState(`${this.eventsChannelId}.motion`, COMMON_MOTION, value);
-      this.conditionalRecording(EventState.ReactingOnMotion);
+      // this.conditionalRecording(EventState.ReactingOnMotion);
     }
   }
 
@@ -955,7 +956,7 @@ export class OwnRingCamera extends OwnRingDevice {
       if (this._adapter.config.auto_snapshot) {
         setTimeout((): void => {
           this.debug(`delayed snapshot recording`);
-          this.takeSnapshot();
+          this.takeSnapshot(uuid);
         }, this._adapter.config.recordtime_auto_livestream * 1000 + 3000);
       }
       if (this._adapter.config.auto_HDsnapshot) {
