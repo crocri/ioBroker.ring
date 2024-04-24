@@ -553,6 +553,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
                 else if (m.val < 60) {
                     schedMinute = `${m.start}-59/${m.val.toString()}`;
                 }
+                this.info(`Create scheduled Job for ${m.name} at "${m.start * 10} ${schedMinute} ${schedHour} * * *"`);
                 node_schedule_1.default.scheduleJob(`Auto save ${m.name}_${this._adapter.name}_${this._adapter.instance}`, `${m.start * 10} ${schedMinute} ${schedHour} * * *`, () => {
                     this.info(`Cronjob Auto save ${m.name} starts`);
                     m.fct();
