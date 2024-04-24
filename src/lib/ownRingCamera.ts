@@ -470,11 +470,7 @@ export class OwnRingCamera extends OwnRingDevice {
         const targetVal: boolean = state.val as boolean;
         if (targetVal) {
           this.info(`Device Debug Data for ${this.shortId}: ${util.inspect(this._ringDevice, false, 1)}`);
-          this._adapter.upsertState(
-            `${this.fullId}.${STATE_ID_DEBUG_REQUEST}`,
-            COMMON_DEBUG_REQUEST,
-            false,
-          );
+          this._adapter.upsertState(`${this.fullId}.${STATE_ID_DEBUG_REQUEST}`, COMMON_DEBUG_REQUEST, false);
         }
         return;
 
@@ -784,59 +780,19 @@ export class OwnRingCamera extends OwnRingDevice {
   }
 
   private updateDeviceInfoObject(data: CameraData): void {
-    this._adapter.upsertState(
-      `${this.infoChannelId}.id`,
-      COMMON_INFO_ID,
-      data.device_id,
-    );
-    this._adapter.upsertState(
-      `${this.infoChannelId}.kind`,
-      COMMON_INFO_KIND,
-      data.kind as string,
-    );
-    this._adapter.upsertState(
-      `${this.infoChannelId}.description`,
-      COMMON_INFO_DESCRIPTION,
-      data.description,
-    );
-    this._adapter.upsertState(
-      `${this.infoChannelId}.external_connection`,
-      COMMON_INFO_EXTERNAL_CONNECTION,
-      data.external_connection,
-    );
-    this._adapter.upsertState(
-      `${this.infoChannelId}.hasLight`,
-      COMMON_INFO_HAS_LIGHT,
-      this._ringDevice.hasLight,
-    );
-    this._adapter.upsertState(
-      `${this.infoChannelId}.hasBattery`,
-      COMMON_INFO_HAS_BATTERY,
-      this._ringDevice.hasBattery,
-    );
-    this._adapter.upsertState(
-      `${this.infoChannelId}.hasSiren`,
-      COMMON_INFO_HAS_SIREN,
-      this._ringDevice.hasSiren,
-    );
+    this._adapter.upsertState(`${this.infoChannelId}.id`, COMMON_INFO_ID, data.device_id);
+    this._adapter.upsertState(`${this.infoChannelId}.kind`, COMMON_INFO_KIND, data.kind as string);
+    this._adapter.upsertState(`${this.infoChannelId}.description`, COMMON_INFO_DESCRIPTION, data.description);
+    this._adapter.upsertState(`${this.infoChannelId}.external_connection`, COMMON_INFO_EXTERNAL_CONNECTION, data.external_connection);
+    this._adapter.upsertState(`${this.infoChannelId}.hasLight`, COMMON_INFO_HAS_LIGHT, this._ringDevice.hasLight);
+    this._adapter.upsertState(`${this.infoChannelId}.hasBattery`, COMMON_INFO_HAS_BATTERY, this._ringDevice.hasBattery);
+    this._adapter.upsertState(`${this.infoChannelId}.hasSiren`, COMMON_INFO_HAS_SIREN, this._ringDevice.hasSiren);
   }
 
   private updateHistoryObject(lastAction: LastAction): void {
-    this._adapter.upsertState(
-      `${this.historyChannelId}.created_at`,
-      COMMON_HISTORY_CREATED_AT,
-      lastAction.event.created_at,
-    );
-    this._adapter.upsertState(
-      `${this.historyChannelId}.history_url`,
-      COMMON_HISTORY_URL,
-      lastAction.historyUrl,
-    );
-    this._adapter.upsertState(
-      `${this.historyChannelId}.kind`,
-      COMMON_HISTORY_KIND,
-      lastAction.event.kind,
-    );
+    this._adapter.upsertState(`${this.historyChannelId}.created_at`, COMMON_HISTORY_CREATED_AT, lastAction.event.created_at);
+    this._adapter.upsertState(`${this.historyChannelId}.history_url`, COMMON_HISTORY_URL, lastAction.historyUrl);
+    this._adapter.upsertState(`${this.historyChannelId}.kind`, COMMON_HISTORY_KIND, lastAction.event.kind);
   }
 
   private async updateSnapshotRequest(ack: boolean = true): Promise<void> {
@@ -971,7 +927,7 @@ export class OwnRingCamera extends OwnRingDevice {
     this.silly(`Start recording for Event "${EventState[state]}"...`);
     this._state = state;
     try {
-      this._adapter.config.auto_snapshot && /* !this._ringDevice.hasBattery && */ await this.takeSnapshot(uuid, true);
+      this._adapter.config.auto_snapshot && /* !this._ringDevice.hasBattery && */ await this.takeSnapshot();
       this._adapter.config.auto_HDsnapshot && await this.takeHDSnapshot();
       this._adapter.config.auto_livestream && await this.startLivestream(this._adapter.config.recordtime_auto_livestream);
       // give some time to evaluate motion state, e.g. for node-red
