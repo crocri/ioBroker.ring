@@ -878,7 +878,7 @@ export class OwnRingCamera extends OwnRingDevice {
         `${this.eventsChannelId}.detectionType`, COMMON_EVENTS_DETECTIONTYPE, value.ding.detection_type ?? value.subtype);
       this._adapter.upsertState(`${this.eventsChannelId}.created_at`, COMMON_EVENTS_MOMENT, Date.now());
       this._adapter.upsertState(`${this.eventsChannelId}.message`, COMMON_EVENTS_MESSAGE, value.aps.alert);
-      // this.conditionalRecording(EventState.ReactingOnMotion, value.ding.image_uuid);
+      this.conditionalRecording(EventState.ReactingOnMotion, value.ding.image_uuid);
     }
   }
 
@@ -891,7 +891,7 @@ export class OwnRingCamera extends OwnRingDevice {
         return;
       }
       this._adapter.upsertState(`${this.eventsChannelId}.motion`, COMMON_MOTION, value);
-      this.conditionalRecording(EventState.ReactingOnMotion);
+      // this.conditionalRecording(EventState.ReactingOnMotion);
     }
   }
 
