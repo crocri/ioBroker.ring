@@ -721,10 +721,10 @@ export class OwnRingCamera extends OwnRingDevice {
         let schedMinute: string = "*";
         let schedHour: string = "*";
         if (m.val === 3600) {
-          schedMinute = "1";
-          schedHour = "12";
+          schedMinute = "0";
+          schedHour = "1";
         } else if (m.val === 60) {
-          schedMinute = "3";
+          schedMinute = "1";
         } else if (m.val < 60) {
           schedMinute = `${m.start}-59/${m.val.toString()}`;
         }
