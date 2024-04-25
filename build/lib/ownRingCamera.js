@@ -243,13 +243,13 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
         const { fullPath, dirname } = file_service_1.FileService.getPath(this._adapter.config.path_snapshot, this._adapter.config.filename_snapshot, ++this._HDsnapshotCount, this.shortId, this.fullId, this.kind);
         if (!(await file_service_1.FileService.prepareFolder(dirname))) {
             this.warn(`prepare folder problem --> won't take Snapshot`);
-            await this.updateSnapshotRequest(uuid, false);
+            await this.updateSnapshotRequest(false);
             return;
         }
         file_service_1.FileService.deleteFileIfExistSync(fullPath, this._adapter);
         if (this._ringDevice.isOffline) {
             this.info(`is offline --> won't take Snapshot`);
-            await this.updateSnapshotRequest(uuid, false);
+            await this.updateSnapshotRequest(false);
             return;
         }
         const image = await this._ringDevice.getNextSnapshot({ force: true, uuid: uuid })
@@ -261,7 +261,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
             else {
                 this.catcher("Couldn't get Snapshot from api.", err);
             }
-            this.updateSnapshotRequest(uuid, false);
+            this.updateSnapshotRequest(false);
             return err;
         });
         if (!image.byteLength) {
@@ -271,7 +271,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
             else {
                 this.warn("Couldn't create snapshot from image");
             }
-            await this.updateSnapshotRequest(uuid, false);
+            await this.updateSnapshotRequest(false);
             return;
         }
         else {
@@ -302,7 +302,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
         }
         this.silly(`Writing Snapshot (Length: ${image.length}) to "${fullPath}"`);
         await file_service_1.FileService.writeFile(fullPath, image_txt, this._adapter);
-        await this.updateSnapshotObject(uuid);
+        await this.updateSnapshotObject();
         this.debug(`Done creating snapshot to ${fullPath}`);
     }
     async updateHistory() {
@@ -556,6 +556,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
                 this.info(`Create scheduled Job for ${m.name} at "${schedSec} ${schedMinute} ${schedHour} * * *"`);
                 node_schedule_1.default.scheduleJob(`Auto save ${m.name}_${this._adapter.name}_${this._adapter.instance}`, `${schedSec} ${schedMinute} ${schedHour} * * *`, () => {
                     this.info(`Cronjob Auto save ${m.name} starts`);
+                    this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, constants_1.COMMON_ON_DEMAND, true);
                     m.fct();
                 });
             }
@@ -609,10 +610,9 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
         this._adapter.upsertState(`${this.historyChannelId}.history_url`, constants_1.COMMON_HISTORY_URL, lastAction.historyUrl);
         this._adapter.upsertState(`${this.historyChannelId}.kind`, constants_1.COMMON_HISTORY_KIND, lastAction.event.kind);
     }
-    async updateSnapshotRequest(uuid = "", ack = true) {
+    async updateSnapshotRequest(ack = true) {
         this._adapter.upsertState(`${this.snapshotChannelId}.${constants_1.STATE_ID_SNAPSHOT_REQUEST}`, constants_1.COMMON_SNAPSHOT_REQUEST, false, ack);
-        if (uuid)
-            this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, constants_1.COMMON_ON_DEMAND, false, true);
+        this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, constants_1.COMMON_ON_DEMAND, false, true);
     }
     async updateHDSnapshotRequest(ack = true) {
         this._adapter.upsertState(`${this.HDsnapshotChannelId}.${constants_1.STATE_ID_HDSNAPSHOT_REQUEST}`, constants_1.COMMON_HDSNAPSHOT_REQUEST, false, ack);
@@ -622,14 +622,14 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
         this._durationLiveStream = this._adapter.config.recordtime_livestream;
         this._adapter.upsertState(`${this.liveStreamChannelId}.${constants_1.STATE_ID_LIVESTREAM_DURATION}`, constants_1.COMMON_LIVESTREAM_DURATION, this._durationLiveStream, ack);
     }
-    async updateSnapshotObject(uuid = "") {
+    async updateSnapshotObject() {
         this.debug(`Update Snapshot Object`);
         if (this._lastSnapshotTimestamp !== 0) {
             this._adapter.upsertState(`${this.snapshotChannelId}.file`, constants_1.COMMON_SNAPSHOT_FILE, this._lastSnapShotDir);
             this._adapter.upsertState(`${this.snapshotChannelId}.moment`, constants_1.COMMON_SNAPSHOT_MOMENT, this._lastSnapshotTimestamp);
             this._adapter.upsertState(`${this.snapshotChannelId}.url`, constants_1.COMMON_SNAPSHOT_URL, this._lastSnapShotUrl);
         }
-        await this.updateSnapshotRequest(uuid);
+        await this.updateSnapshotRequest();
     }
     async updateHDSnapshotObject() {
         this.debug(`Update HD Snapshot Object`);

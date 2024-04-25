@@ -372,14 +372,14 @@ export class OwnRingCamera extends OwnRingDevice {
 
     if (!(await FileService.prepareFolder(dirname))) {
       this.warn(`prepare folder problem --> won't take Snapshot`);
-      await this.updateSnapshotRequest(uuid, false);
+      await this.updateSnapshotRequest(false);
       return;
     }
     FileService.deleteFileIfExistSync(fullPath, this._adapter);
 
     if (this._ringDevice.isOffline) {
       this.info(`is offline --> won't take Snapshot`);
-      await this.updateSnapshotRequest(uuid, false);
+      await this.updateSnapshotRequest(false);
       return;
     }
 
@@ -391,7 +391,7 @@ export class OwnRingCamera extends OwnRingDevice {
         } else {
           this.catcher("Couldn't get Snapshot from api.", err);
         }
-        this.updateSnapshotRequest(uuid, false);
+        this.updateSnapshotRequest(false);
         return err;
       });
 
@@ -401,7 +401,7 @@ export class OwnRingCamera extends OwnRingDevice {
       } else {
         this.warn("Couldn't create snapshot from image");
       }
-      await this.updateSnapshotRequest(uuid, false);
+      await this.updateSnapshotRequest(false);
       return;
     } else {
       this.silly(`Response timestamp: ${image.responseTimestamp}, 
@@ -438,7 +438,7 @@ export class OwnRingCamera extends OwnRingDevice {
     }
     this.silly(`Writing Snapshot (Length: ${image.length}) to "${fullPath}"`);
     await FileService.writeFile(fullPath, image_txt, this._adapter);
-    await this.updateSnapshotObject(uuid);
+    await this.updateSnapshotObject();
     this.debug(`Done creating snapshot to ${fullPath}`);
   }
 
@@ -735,6 +735,7 @@ export class OwnRingCamera extends OwnRingDevice {
           `${schedSec} ${schedMinute} ${schedHour} * * *`,
           (): void => {
             this.info(`Cronjob Auto save ${m.name} starts`);
+            this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, true);
             m.fct();
           }
         );
@@ -799,9 +800,9 @@ export class OwnRingCamera extends OwnRingDevice {
     this._adapter.upsertState(`${this.historyChannelId}.kind`, COMMON_HISTORY_KIND, lastAction.event.kind);
   }
 
-  private async updateSnapshotRequest(uuid: string = "", ack: boolean = true): Promise<void> {
+  private async updateSnapshotRequest(ack: boolean = true): Promise<void> {
     this._adapter.upsertState(`${this.snapshotChannelId}.${STATE_ID_SNAPSHOT_REQUEST}`, COMMON_SNAPSHOT_REQUEST, false, ack);
-    if (uuid) this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, false, true);
+    this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, false, true);
   }
 
   private async updateHDSnapshotRequest(ack: boolean = true): Promise<void> {
@@ -815,14 +816,14 @@ export class OwnRingCamera extends OwnRingDevice {
       `${this.liveStreamChannelId}.${STATE_ID_LIVESTREAM_DURATION}`, COMMON_LIVESTREAM_DURATION, this._durationLiveStream, ack);
   }
 
-  private async updateSnapshotObject(uuid: string = ""): Promise<void> {
+  private async updateSnapshotObject(): Promise<void> {
     this.debug(`Update Snapshot Object`);
     if (this._lastSnapshotTimestamp !== 0) {
       this._adapter.upsertState(`${this.snapshotChannelId}.file`, COMMON_SNAPSHOT_FILE, this._lastSnapShotDir);
       this._adapter.upsertState(`${this.snapshotChannelId}.moment`, COMMON_SNAPSHOT_MOMENT, this._lastSnapshotTimestamp);
       this._adapter.upsertState(`${this.snapshotChannelId}.url`, COMMON_SNAPSHOT_URL, this._lastSnapShotUrl);
     }
-    await this.updateSnapshotRequest(uuid);
+    await this.updateSnapshotRequest();
   }
 
   private async updateHDSnapshotObject(): Promise<void> {
