@@ -64,7 +64,7 @@ export class RingAdapter extends Adapter {
   }
 
   public async upsertState(
-    id: string, common: Partial<ioBroker.StateCommon>, value: ioBroker.StateValue, 
+    id: string, common: Partial<ioBroker.StateCommon>, value: ioBroker.StateValue,
     ack: boolean = true, subscribe: boolean = false): Promise<void> {
     if (this.states[id] === value && !subscribe) {
       // Unchanged and from user not changeable Value
