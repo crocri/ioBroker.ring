@@ -562,6 +562,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
                         m.fct();
                     }
                     else {
+                        this.debug(`recAct: (${util.inspect(recAct, true, 1)})`);
                         this.warn(`Cronjob ${m.name} not executed because another job is already running. Pleade adapt timer and/or duration time!`);
                     }
                 });
