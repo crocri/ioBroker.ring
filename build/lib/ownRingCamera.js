@@ -44,9 +44,8 @@ var EventState;
 (function (EventState) {
     EventState[EventState["Idle"] = 0] = "Idle";
     EventState[EventState["ReactingOnEvent"] = 1] = "ReactingOnEvent";
-    EventState[EventState["ReactingOnDemand"] = 2] = "ReactingOnDemand";
-    EventState[EventState["ReactingOnMotion"] = 3] = "ReactingOnMotion";
-    EventState[EventState["ReactingOnDoorbell"] = 4] = "ReactingOnDoorbell";
+    EventState[EventState["ReactingOnMotion"] = 2] = "ReactingOnMotion";
+    EventState[EventState["ReactingOnDoorbell"] = 3] = "ReactingOnDoorbell";
 })(EventState || (EventState = {}));
 class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
     constructor(ringDevice, location, adapter, apiClient) {
@@ -61,10 +60,10 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
         this._lastHDSnapshotTimestamp = 0;
         this._HDsnapshotCount = 0;
         this._liveStreamCount = 0;
-        this._state = EventState.Idle;
         this._lastLiveStreamDir = "";
         this._lastSnapShotDir = "";
         this._lastHDSnapShotDir = "";
+        this._state = EventState.Idle;
         this._motionEventBlocker = new event_blocker_1.EventBlocker(this._adapter.config.ignore_events_Motion, this._adapter.config.keep_ignoring_if_retriggered);
         this._notifyEventBlocker = new event_blocker_1.EventBlocker(this._adapter.config.ignore_events_Motion, this._adapter.config.keep_ignoring_if_retriggered);
         this._doorbellEventBlocker = new event_blocker_1.EventBlocker(this._adapter.config.ignore_events_Doorbell, this._adapter.config.keep_ignoring_if_retriggered);
@@ -695,10 +694,6 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
             this._adapter.upsertState(`${this.eventsChannelId}.detectionType`, constants_1.COMMON_EVENTS_DETECTIONTYPE, (_a = value.ding.detection_type) !== null && _a !== void 0 ? _a : value.subtype);
             this._adapter.upsertState(`${this.eventsChannelId}.created_at`, constants_1.COMMON_EVENTS_MOMENT, Date.now());
             this._adapter.upsertState(`${this.eventsChannelId}.message`, constants_1.COMMON_EVENTS_MESSAGE, value.aps.alert);
-            if (value.ding.image_uuid) {
-                this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, constants_1.COMMON_ON_DEMAND, true);
-                this.ondemandRecording(EventState.ReactingOnDemand, value.ding.image_uuid);
-            }
         }
     }
     onMotion(value) {
@@ -729,43 +724,19 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
     async motionRecording(state) {
         this.silly(`Start recording for motion event "${EventState[state]}"...`);
         this._state = state;
-        try {
-            this._adapter.config.auto_HDsnapshot && await this.takeHDSnapshot();
-            this._adapter.config.auto_livestream && await this.startLivestream(this._adapter.config.recordtime_auto_livestream);
-            // give some time to evaluate motion state, e.g. for node-red
-            setTimeout(() => {
-                this._adapter.upsertState(`${this.eventsChannelId}.motion`, constants_1.COMMON_MOTION, false, true);
-            }, 200);
-            this.debug("Recording of motion finished.");
-        }
-        finally {
-            this._state = EventState.Idle;
-        }
-        return;
-    }
-    async ondemandRecording(state, uuid) {
         if (this._state !== EventState.Idle) {
-            this.silly(`Would have recorded due to "${EventState[state]}", but we are already reacting.`);
-            if (this._adapter.config.auto_snapshot) {
+            try {
+                this._adapter.config.auto_HDsnapshot && await this.takeHDSnapshot();
+                this._adapter.config.auto_livestream && await this.startLivestream(this._adapter.config.recordtime_auto_livestream);
+                // give some time to evaluate motion state, e.g. for node-red
                 setTimeout(() => {
-                    this.debug(`delayed snapshot recording`);
-                    this.takeSnapshot(uuid, true);
-                }, 2000);
+                    this._adapter.upsertState(`${this.eventsChannelId}.motion`, constants_1.COMMON_MOTION, false, true);
+                }, 200);
+                this.debug("Recording of motion finished.");
             }
-            return;
-        }
-        this.silly(`Start recording for Event "${EventState[state]}"...`);
-        this._state = state;
-        try {
-            this._adapter.config.auto_snapshot /* && !this._ringDevice.hasBattery */ && await this.takeSnapshot(uuid, true);
-            // give some time to evaluate motion state, e.g. for node-red
-            setTimeout(() => {
-                this._adapter.upsertState(`${this.eventsChannelId}.event`, constants_1.COMMON_ON_DEMAND, false, true);
-            }, 200);
-            this.debug("Recording of event finished.");
-        }
-        finally {
-            this._state = EventState.Idle;
+            finally {
+                this._state = EventState.Idle;
+            }
         }
         return;
     }
