@@ -733,10 +733,13 @@ export class OwnRingCamera extends OwnRingDevice {
         schedule.scheduleJob(
           `Auto save ${m.name}_${this._adapter.name}_${this._adapter.instance}`,
           `${schedSec} ${schedMinute} ${schedHour} * * *`,
-          (): void => {
-            this.info(`Cronjob Auto save ${m.name} starts`);
-            this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, true);
-            m.fct();
+          async (): Promise<void> => {
+            const recAct: any = await this._adapter.getStateAsync(`${this.eventsChannelId}.ondemand`);
+            if (!recAct || !recAct.val) {
+              this.info(`Cronjob Auto save ${m.name} starts`);
+              this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, true);
+              m.fct();
+            }
           }
         );
       }

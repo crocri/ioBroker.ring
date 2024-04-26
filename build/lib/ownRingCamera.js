@@ -554,10 +554,13 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
                     schedSec = `*/${m.val.toString()}`;
                 }
                 this.info(`Create scheduled Job for ${m.name} at "${schedSec} ${schedMinute} ${schedHour} * * *"`);
-                node_schedule_1.default.scheduleJob(`Auto save ${m.name}_${this._adapter.name}_${this._adapter.instance}`, `${schedSec} ${schedMinute} ${schedHour} * * *`, () => {
-                    this.info(`Cronjob Auto save ${m.name} starts`);
-                    this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, constants_1.COMMON_ON_DEMAND, true);
-                    m.fct();
+                node_schedule_1.default.scheduleJob(`Auto save ${m.name}_${this._adapter.name}_${this._adapter.instance}`, `${schedSec} ${schedMinute} ${schedHour} * * *`, async () => {
+                    const recAct = await this._adapter.getStateAsync(`${this.eventsChannelId}.ondemand`);
+                    if (!recAct || !recAct.val) {
+                        this.info(`Cronjob Auto save ${m.name} starts`);
+                        this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, constants_1.COMMON_ON_DEMAND, true);
+                        m.fct();
+                    }
                 });
             }
         }
