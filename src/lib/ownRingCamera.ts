@@ -722,30 +722,30 @@ export class OwnRingCamera extends OwnRingDevice {
     for (const m of media) {
       if (m.val > 0) {
         let schedSec: string = m.start.toString();
-        let schedMinute: string = "*";
-        const schedHour: string = "*";
-        if (m.val === 3600) {
-          schedMinute = "0";
-        } else if (m.val === 60) {
-          // nothing to set
-        } else if (m.val < 60) {
+        let schedMin: string = "*";
+        let schedHour: string = "*";
+        let schedDay: string = "*";
+        if (m.val < 60) {
           schedSec = `*/${m.val.toString()}`;
+        } else if (m.val < 3600) {
+          schedMin = `*/${(m.val / 60).toString()}`;
+        } else if (m.val < 43.200) {
+          schedHour = `*/${(m.val / 3600).toString()}`;
+        } else {
+          schedDay = `*/${(m.val / 43200).toString()}`;
         }
-        this.info(`Create scheduled Job for ${m.name} at "${schedSec} ${schedMinute} ${schedHour} * * *"`);
-        schedule.scheduleJob(
-          `Auto save ${m.name}_${this._adapter.name}_${this._adapter.instance}`,
-          `${schedSec} ${schedMinute} ${schedHour} * * *`,
-          async (): Promise<void> => {
-            const recAct: any = await this._adapter.getStateAsync(`${this.eventsChannelId}.ondemand`);
-            if (!recAct || !recAct.val) {
-              this.info(`Cronjob Auto save ${m.name} starts`);
-              this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, true);
-              m.fct(this._adapter.config.recordtime_auto_livestream);
-            } else {
-              this.warn(`Cronjob ${m.name} not executed because another job is already running. Please adapt timer and/or duration time!`);
-            }
+        const t: string = `${schedSec} ${schedMin} ${schedHour} ${schedDay} * *`;
+        this.info(`Create scheduled Job for ${m.name} at "${t}"`);
+        schedule.scheduleJob(`Auto save ${m.name}_${this._adapter.name}_${this._adapter.instance}`, t, async (): Promise<void> => {
+          const recAct: any = await this._adapter.getStateAsync(`${this.eventsChannelId}.ondemand`);
+          if (!recAct || !recAct.val) {
+            this.info(`Cronjob Auto save ${m.name} starts`);
+            this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, true);
+            m.fct(this._adapter.config.recordtime_auto_livestream);
+          } else {
+            this.warn(`Cronjob ${m.name} not executed because another job is already running. Please adapt timer and/or duration time!`);
           }
-        );
+        });
       }
     }
   }

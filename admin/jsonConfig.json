@@ -203,10 +203,6 @@
               "label": "-"
             },
             {
-              "value": 5,
-              "label": "5 seconds"
-            },
-            {
               "value": 15,
               "label": "15 seconds"
             },
@@ -219,8 +215,20 @@
               "label": "1 minute"
             },
             {
+              "value": 180,
+              "label": "3 minutes"
+            },
+            {
+              "value": 1800,
+              "label": "30 minutes"
+            },
+            {
               "value": 3600,
               "label": "1 hour"
+            },
+            {
+              "value": 43200,
+              "label": "1 day"
             }
           ],
           "sm": 12,
@@ -293,10 +301,6 @@
               "label": "-"
             },
             {
-              "value": 5,
-              "label": "5 seconds"
-            },
-            {
               "value": 15,
               "label": "15 seconds"
             },
@@ -309,8 +313,20 @@
               "label": "1 minute"
             },
             {
+              "value": 180,
+              "label": "3 minutes"
+            },
+            {
+              "value": 1800,
+              "label": "30 minutes"
+            },
+            {
               "value": 3600,
               "label": "1 hour"
+            },
+            {
+              "value": 43200,
+              "label": "1 day"
             }
           ],
           "sm": 12,
@@ -451,10 +467,6 @@
               "label": "-"
             },
             {
-              "value": 5,
-              "label": "5 seconds"
-            },
-            {
               "value": 15,
               "label": "15 seconds"
             },
@@ -467,8 +479,20 @@
               "label": "1 minute"
             },
             {
+              "value": 180,
+              "label": "3 minutes"
+            },
+            {
+              "value": 1800,
+              "label": "30 minutes"
+            },
+            {
               "value": 3600,
               "label": "1 hour"
+            },
+            {
+              "value": 43200,
+              "label": "1 day"
             }
           ],
           "sm": 12,
@@ -477,7 +501,7 @@
         },
         "recordtime_auto_livestream": {
           "type": "number",
-          "min": 0,
+          "min": 5,
           "max": 60,
           "label": "Automatic recording time in seconds",
           "sm": 12,
@@ -486,7 +510,7 @@
         },
         "recordtime_livestream": {
           "type": "number",
-          "min": 0,
+          "min": 5,
           "max": 60,
           "label": "Recording time in seconds",
           "sm": 12,
