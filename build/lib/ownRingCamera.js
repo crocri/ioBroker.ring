@@ -443,6 +443,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
         await this._adapter.upsertState(`${this.HDsnapshotChannelId}.${constants_1.STATE_ID_HDSNAPSHOT_REQUEST}`, constants_1.COMMON_HDSNAPSHOT_REQUEST, false, true, true);
         await this._adapter.upsertState(`${this.liveStreamChannelId}.${constants_1.STATE_ID_LIVESTREAM_REQUEST}`, constants_1.COMMON_LIVESTREAM_REQUEST, false, true, true);
         this._adapter.upsertState(`${this.liveStreamChannelId}.${constants_1.STATE_ID_LIVESTREAM_DURATION}`, constants_1.COMMON_LIVESTREAM_DURATION, this._durationLiveStream, true);
+        this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, constants_1.COMMON_ON_DEMAND, false);
         this._adapter.upsertState(`${this.snapshotChannelId}.auto`, constants_1.COMMON_SNAPSHOT_AUTO, this._adapter.config.auto_snapshot);
         this._adapter.upsertState(`${this.HDsnapshotChannelId}.auto`, constants_1.COMMON_HDSNAPSHOT_AUTO, this._adapter.config.auto_HDsnapshot);
         this._adapter.upsertState(`${this.liveStreamChannelId}.auto`, constants_1.COMMON_LIVESTREAM_AUTO, this._adapter.config.auto_livestream);
@@ -562,7 +563,6 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
                         m.fct();
                     }
                     else {
-                        this.debug(`recAct: (${util.inspect(recAct, true, 1)})`);
                         this.warn(`Cronjob ${m.name} not executed because another job is already running. Pleade adapt timer and/or duration time!`);
                     }
                 });

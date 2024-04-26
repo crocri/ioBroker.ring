@@ -588,6 +588,8 @@ export class OwnRingCamera extends OwnRingDevice {
     this._adapter.upsertState(
       `${this.liveStreamChannelId}.${STATE_ID_LIVESTREAM_DURATION}`, COMMON_LIVESTREAM_DURATION, this._durationLiveStream, true);
 
+    this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, false);
+
     this._adapter.upsertState(`${this.snapshotChannelId}.auto`, COMMON_SNAPSHOT_AUTO, this._adapter.config.auto_snapshot);
     this._adapter.upsertState(`${this.HDsnapshotChannelId}.auto`, COMMON_HDSNAPSHOT_AUTO, this._adapter.config.auto_HDsnapshot);
     this._adapter.upsertState(`${this.liveStreamChannelId}.auto`, COMMON_LIVESTREAM_AUTO, this._adapter.config.auto_livestream);
@@ -740,7 +742,6 @@ export class OwnRingCamera extends OwnRingDevice {
               this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, true);
               m.fct();
             } else {
-              this.debug(`recAct: (${util.inspect(recAct, true, 1)})`);
               this.warn(`Cronjob ${m.name} not executed because another job is already running. Pleade adapt timer and/or duration time!`);
             }
           }
