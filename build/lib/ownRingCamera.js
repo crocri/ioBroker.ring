@@ -561,6 +561,9 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
                         this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, constants_1.COMMON_ON_DEMAND, true);
                         m.fct();
                     }
+                    else {
+                        this.warn(`Cronjob ${m.name} not executed because another job is already running. Pleade adapt timer and/or duration time!`);
+                    }
                 });
             }
         }
