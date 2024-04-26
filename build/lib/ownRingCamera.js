@@ -535,7 +535,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
                 name: "Livestream",
                 val: this._adapter.config.save_livestream,
                 fct: () => {
-                    this.startLivestream();
+                    this.startLivestream(this._adapter.config.recordtime_auto_livestream);
                 },
                 start: 40
             }
@@ -560,10 +560,10 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
                     if (!recAct || !recAct.val) {
                         this.info(`Cronjob Auto save ${m.name} starts`);
                         this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, constants_1.COMMON_ON_DEMAND, true);
-                        m.fct();
+                        m.fct(this._adapter.config.recordtime_auto_livestream);
                     }
                     else {
-                        this.warn(`Cronjob ${m.name} not executed because another job is already running. Pleade adapt timer and/or duration time!`);
+                        this.warn(`Cronjob ${m.name} not executed because another job is already running. Please adapt timer and/or duration time!`);
                     }
                 });
             }
