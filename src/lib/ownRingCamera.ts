@@ -808,15 +808,17 @@ export class OwnRingCamera extends OwnRingDevice {
   }
 
   private async updateSnapshotRequest(ack: boolean = true): Promise<void> {
+    this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, false);
     this._adapter.upsertState(`${this.snapshotChannelId}.${STATE_ID_SNAPSHOT_REQUEST}`, COMMON_SNAPSHOT_REQUEST, false, ack);
-    this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, false, true);
   }
 
   private async updateHDSnapshotRequest(ack: boolean = true): Promise<void> {
+    this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, false);
     this._adapter.upsertState(`${this.HDsnapshotChannelId}.${STATE_ID_HDSNAPSHOT_REQUEST}`, COMMON_HDSNAPSHOT_REQUEST, false, ack);
   }
 
   private async updateLivestreamRequest(ack: boolean = true): Promise<void> {
+    this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, false);
     this._adapter.upsertState(`${this.liveStreamChannelId}.${STATE_ID_LIVESTREAM_REQUEST}`, COMMON_LIVESTREAM_REQUEST, false, ack);
     this._durationLiveStream = this._adapter.config.recordtime_livestream;
     this._adapter.upsertState(
