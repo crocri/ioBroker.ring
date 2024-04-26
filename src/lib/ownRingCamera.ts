@@ -739,6 +739,8 @@ export class OwnRingCamera extends OwnRingDevice {
               this.info(`Cronjob Auto save ${m.name} starts`);
               this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, COMMON_ON_DEMAND, true);
               m.fct();
+            } else {
+              this.warn(`Cronjob ${m.name} not executed because another job is already running. Pleade adapt timer and/or duration time!`);
             }
           }
         );
