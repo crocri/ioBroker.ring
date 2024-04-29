@@ -924,6 +924,7 @@ export class OwnRingCamera extends OwnRingDevice {
     this._state = state;
     if (this._state !== EventState.Idle) {
       try {
+        this._adapter.config.auto_snapshot && !this._ringDevice.hasBattery && await this.takeSnapshot();
         this._adapter.config.auto_HDsnapshot && await this.takeHDSnapshot();
         this._adapter.config.auto_livestream && await this.startLivestream(this._adapter.config.recordtime_auto_livestream);
         // give some time to evaluate motion state, e.g. for node-red
