@@ -24,7 +24,7 @@ function asyncEmit(command, data1 = "", data2 = "") {
 }
 
 async function AddCams() {
-    const devs = await asyncEmit("getForeignObjects", "ring." + instance + ".cocoa*", "device")
+    const devs = await asyncEmit("getForeignObjects", "ring." + instance + "(.cocoa_|stickup_)*", "device")
         .then((result) => { return result; })
         .catch((error) => { console.log(error); return; });
     let cam = 0;
