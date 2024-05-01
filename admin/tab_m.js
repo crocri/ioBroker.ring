@@ -24,13 +24,15 @@ function asyncEmit(command, data1 = "", data2 = "") {
 }
 
 async function AddCams() {
-    const devs1 = await asyncEmit("getForeignObjects", "ring." + instance + ".cocoa_*", "device")
+    const devs = await asyncEmit("getForeignObjects", "ring." + instance + ".cocoa_*", "device")
         .then((result) => { return result; })
         .catch((error) => { console.log(error); return; });
+    /*
     const devs2 = await asyncEmit("getForeignObjects", "ring." + instance + ".stickup_*", "device")
         .then((result) => { return result; })
         .catch((error) => { console.log(error); return; });
     const devs = devs1 + devs2;
+    */
     let cam = 0;
     // for (const c = 0; c < 3; c++) // Test more than one camera
     for (const dev_prop in devs) {
