@@ -726,8 +726,8 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
     /*
     private async motionRecording(state: EventState): Promise<void> {
       this.silly(`Start recording for motion event "${EventState[state]}"...`);
-      this._state = state;
-      if (this._state !== EventState.Idle) {
+      if (this._state === EventState.Idle) {
+        this._state = state;
         try {
           // this._adapter.config.auto_snapshot && !this._ringDevice.hasBattery && await this.takeSnapshot();
           this._adapter.config.auto_HDsnapshot && await this.takeHDSnapshot();
