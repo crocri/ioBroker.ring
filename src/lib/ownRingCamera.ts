@@ -887,9 +887,11 @@ export class OwnRingCamera extends OwnRingDevice {
 
       this.notifyRecording(EventState.ReactingOnEvent, value.ding.image_uuid);
 
-      this._adapter.upsertState(`${this.eventsChannelId}.type`, COMMON_EVENTS_TYPE, value.subtype);
+      this._adapter.upsertState(`${this.eventsChannelId}.type`, COMMON_EVENTS_TYPE,
+        TextService.getdetectionType(value.subtype, this._adapter.language));
       this._adapter.upsertState(
-        `${this.eventsChannelId}.detectionType`, COMMON_EVENTS_DETECTIONTYPE, value.ding.detection_type ?? value.subtype);
+        `${this.eventsChannelId}.detectionType`, COMMON_EVENTS_DETECTIONTYPE,
+        TextService.getdetectionType(value.ding.detection_type ?? value.subtype, this._adapter.language));
       this._adapter.upsertState(`${this.eventsChannelId}.created_at`, COMMON_EVENTS_MOMENT, Date.now());
       this._adapter.upsertState(`${this.eventsChannelId}.message`, COMMON_EVENTS_MESSAGE, value.aps.alert);
     }
