@@ -904,7 +904,6 @@ export class OwnRingCamera extends OwnRingDevice {
         return;
       }
       this._adapter.upsertState(`${this.eventsChannelId}.motion`, COMMON_MOTION, value);
-      // this.motionRecording(EventState.ReactingOnMotion);
     }
   }
 
@@ -921,27 +920,7 @@ export class OwnRingCamera extends OwnRingDevice {
       }, 1000);
     }
   }
-  /*
-  private async motionRecording(state: EventState): Promise<void> {
-    this.silly(`Start recording for motion event "${EventState[state]}"...`);
-    if (this._state === EventState.Idle) {
-      this._state = state;
-      try {
-        // this._adapter.config.auto_snapshot && !this._ringDevice.hasBattery && await this.takeSnapshot();
-        this._adapter.config.auto_HDsnapshot && await this.takeHDSnapshot();
-        this._adapter.config.auto_livestream && await this.startLivestream(this._adapter.config.recordtime_auto_livestream);
-        // give some time to evaluate motion state, e.g. for node-red
-        setTimeout(() => {
-          this._adapter.upsertState(`${this.eventsChannelId}.motion`, COMMON_MOTION, false, true);
-        }, 200);
-        this.debug("Recording of motion finished.");
-      } finally {
-        this._state = EventState.Idle;
-      }
-    }
-    return;
-  }
-  */
+
   private async notifyRecording(state: EventState, uuid: string): Promise<void> {
     if (this._state !== EventState.Idle) {
       this.silly(`Would have recorded due to "${EventState[state]}", but we are already reacting.`);
