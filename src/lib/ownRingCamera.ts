@@ -885,7 +885,6 @@ export class OwnRingCamera extends OwnRingDevice {
         return;
       }
 
-      this._adapter.upsertState(`${this.eventsChannelId}.motion`, COMMON_MOTION, true);
       this.notifyRecording(EventState.ReactingOnEvent, value.ding.image_uuid);
 
       this._adapter.upsertState(`${this.eventsChannelId}.type`, COMMON_EVENTS_TYPE, value.subtype);
@@ -904,7 +903,7 @@ export class OwnRingCamera extends OwnRingDevice {
         this.debug(`ignore Motion event...`);
         return;
       }
-      // this._adapter.upsertState(`${this.eventsChannelId}.motion`, COMMON_MOTION, value);
+      this._adapter.upsertState(`${this.eventsChannelId}.motion`, COMMON_MOTION, value);
       // this.motionRecording(EventState.ReactingOnMotion);
     }
   }
@@ -963,7 +962,7 @@ export class OwnRingCamera extends OwnRingDevice {
       this._adapter.config.auto_livestream && await this.startLivestream(this._adapter.config.recordtime_auto_livestream);
       // give some time to evaluate motion state, e.g. for node-red
       setTimeout(() => {
-        this._adapter.upsertState(`${this.eventsChannelId}.event`, COMMON_ON_DEMAND, false, true);
+        this._adapter.upsertState(`${this.eventsChannelId}.motion`, COMMON_MOTION, false, true);
       }, 200);
       this.debug("Recording of event finished.");
     } finally {
