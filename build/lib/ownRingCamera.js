@@ -706,7 +706,6 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
                 return;
             }
             this._adapter.upsertState(`${this.eventsChannelId}.motion`, constants_1.COMMON_MOTION, value);
-            this.warn(`Motion set to ${value}`);
         }
     }
     onDoorbell(value) {
@@ -742,7 +741,6 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
             // give some time to evaluate motion state, e.g. for node-red
             setTimeout(() => {
                 this._adapter.upsertState(`${this.eventsChannelId}.motion`, constants_1.COMMON_MOTION, false);
-                this.warn(`Motion set to false`);
             }, 200);
             this.debug("Recording of event finished.");
         }
