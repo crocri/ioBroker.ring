@@ -722,15 +722,9 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
         }
     }
     async notifyRecording(state, uuid) {
-        if (this._state !== EventState.Idle) {
-            this.silly(`Would have recorded due to "${EventState[state]}", but we are already reacting.`);
-            if (this._adapter.config.auto_snapshot) {
-                setTimeout(() => {
-                    this.debug(`delayed snapshot recording`);
-                    this.takeSnapshot(uuid, true);
-                }, 2000);
-            }
-            return;
+        while (this._state !== EventState.Idle) {
+            this.debug(`delayed notify recording`);
+            await new Promise((resolve) => setTimeout(resolve, 1000));
         }
         this.silly(`Start recording for Event "${EventState[state]}"...`);
         this._state = state;
