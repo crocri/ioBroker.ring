@@ -924,8 +924,10 @@ export class OwnRingCamera extends OwnRingDevice {
   }
 
   private async notifyRecording(state: EventState, uuid: string): Promise<void> {
+    let del_cnt: number = 1;
     while (this._state !== EventState.Idle) {
-      this.debug(`delayed notify recording`);
+      this.debug(`delayed notify recording for ${del_cnt}s`);
+      del_cnt++;
       await new Promise((resolve: (value: unknown) => void) => setTimeout(resolve, 1000));
     }
 
