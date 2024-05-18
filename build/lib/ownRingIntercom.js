@@ -88,6 +88,7 @@ class OwnRingIntercom extends ownRingDevice_1.OwnRingDevice {
             this.debug(`ignore Ding event...`);
             return;
         }
+        this._adapter.upsertState(`${this.eventsChannelId}.created_at`, constants_1.COMMON_EVENTS_INTERCOM_DING, Date.now());
         this._adapter.upsertState(`${this.eventsChannelId}.ding`, constants_1.COMMON_EVENTS_INTERCOM_DING, true);
         setTimeout(() => {
             this._adapter.upsertState(`${this.eventsChannelId}.ding`, constants_1.COMMON_EVENTS_INTERCOM_DING, false);
