@@ -52,6 +52,10 @@
             {
               "value": 3,
               "label": "3 hours"
+            },
+            {
+              "value": 24,
+              "label": "1 day"
             }
           ],
           "sm": 12,
