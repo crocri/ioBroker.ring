@@ -623,15 +623,18 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
     }
     async updateSnapshotRequest(ack = true) {
         this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, constants_1.COMMON_ON_DEMAND, false);
-        this._adapter.upsertState(`${this.snapshotChannelId}.${constants_1.STATE_ID_SNAPSHOT_REQUEST}`, constants_1.COMMON_SNAPSHOT_REQUEST, false, ack);
+        // subscribe to true, because user request doesn't change value via upsertState
+        this._adapter.upsertState(`${this.snapshotChannelId}.${constants_1.STATE_ID_SNAPSHOT_REQUEST}`, constants_1.COMMON_SNAPSHOT_REQUEST, false, ack, true);
     }
     async updateHDSnapshotRequest(ack = true) {
         this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, constants_1.COMMON_ON_DEMAND, false);
-        this._adapter.upsertState(`${this.HDsnapshotChannelId}.${constants_1.STATE_ID_HDSNAPSHOT_REQUEST}`, constants_1.COMMON_HDSNAPSHOT_REQUEST, false, ack);
+        // subscribe to true, because user request doesn't change value via upsertState
+        this._adapter.upsertState(`${this.HDsnapshotChannelId}.${constants_1.STATE_ID_HDSNAPSHOT_REQUEST}`, constants_1.COMMON_HDSNAPSHOT_REQUEST, false, ack, true);
     }
     async updateLivestreamRequest(ack = true) {
         this._adapter.upsertState(`${this.eventsChannelId}.ondemand`, constants_1.COMMON_ON_DEMAND, false);
-        this._adapter.upsertState(`${this.liveStreamChannelId}.${constants_1.STATE_ID_LIVESTREAM_REQUEST}`, constants_1.COMMON_LIVESTREAM_REQUEST, false, ack);
+        // subscribe to true, because user request doesn't change value via upsertState
+        this._adapter.upsertState(`${this.liveStreamChannelId}.${constants_1.STATE_ID_LIVESTREAM_REQUEST}`, constants_1.COMMON_LIVESTREAM_REQUEST, false, ack, true);
         this._durationLiveStream = this._adapter.config.recordtime_livestream;
         this._adapter.upsertState(`${this.liveStreamChannelId}.${constants_1.STATE_ID_LIVESTREAM_DURATION}`, constants_1.COMMON_LIVESTREAM_DURATION, this._durationLiveStream, ack);
     }
