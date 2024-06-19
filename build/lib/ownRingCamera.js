@@ -366,7 +366,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
                     this.debug(`Get Snapshot request for ${this.shortId} to value ${targetVal}`);
                     if (targetVal) {
                         await this.takeSnapshot().catch((reason) => {
-                            this.updateSnapshotRequest();
+                            this.updateSnapshotRequest(false);
                             this.catcher("Couldn't retrieve Snapshot.", reason);
                         });
                     }
@@ -381,7 +381,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
                     this.debug(`Get HDSnapshot request for ${this.shortId} to value ${targetVal}`);
                     if (targetVal) {
                         await this.takeHDSnapshot().catch((reason) => {
-                            this.updateHDSnapshotRequest();
+                            this.updateHDSnapshotRequest(false);
                             this.catcher("Couldn't retrieve HDSnapshot.", reason);
                         });
                     }
@@ -396,7 +396,7 @@ class OwnRingCamera extends ownRingDevice_1.OwnRingDevice {
                     this.debug(`Get Livestream request for ${this.shortId} to value ${targetVal}`);
                     if (targetVal) {
                         await this.startLivestream().catch((reason) => {
-                            this.updateLivestreamRequest();
+                            this.updateLivestreamRequest(false);
                             this.catcher("Couldn't retrieve Livestream.", reason);
                         });
                     }
