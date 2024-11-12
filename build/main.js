@@ -218,6 +218,16 @@ class RingAdapter extends adapter_core_1.Adapter {
         }
         this.log.info(`Initializing Api Client`);
         await this.apiClient.init();
+        // Hourly schedule registration if config set
+        if (this.config.renew_registration > 0) {
+            this.log.info(`Renew registration every ${this.config.renew_registration}h`);
+            const hrs = this.config.renew_registration == 24 ? "*" : `*/${this.config.renew_registration}`;
+            const ac = this.apiClient;
+            node_schedule_1.default.scheduleJob("Renew registration", `0 15 ${hrs} * * *`, async () => {
+                this.log.info(`Cronjob 'Renew registration ' starts`);
+                await ac.refreshAll();
+            });
+        }
         this.log.info(`Get sunset and sunrise`);
         await this.CalcSunData();
         // Daily schedule sometime from 00:00:20 to 00:00:40

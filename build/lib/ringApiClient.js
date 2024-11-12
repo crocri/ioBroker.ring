@@ -67,9 +67,6 @@ class RingApiClient {
     }
     async init() {
         await this.refreshAll(true);
-        if (this.adapter.config.renew_registration > 0) {
-            this._refreshInterval = setInterval(this.refreshAll.bind(this), this.adapter.config.renew_registration * 3600 * 1000);
-        }
     }
     async refreshAll(initial = false) {
         var _a;
